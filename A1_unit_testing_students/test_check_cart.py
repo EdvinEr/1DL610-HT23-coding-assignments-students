@@ -23,6 +23,7 @@ def test_1_check_cart():
     assert result == False
 
 def test_2_check_cart(checkout_stub1, monkeypatch):
+    #Check cart with product in cart, checkout
     user = User(name="Lisa", wallet='700')
     cart = ShoppingCart()
     product = Product(name='Mobile', price=200, units=3)
@@ -35,3 +36,16 @@ def test_2_check_cart(checkout_stub1, monkeypatch):
     assert result != False
     checkout_stub1.assert_called_once_with(user, cart)
 
+def test_3_check_cart(checkout_stub1, monkeypatch):
+    # Check cart with product in cart, but no checkout
+    user = User(name="Lando", wallet='500')
+    cart = ShoppingCart()
+    product = Product(name='Car', price=300, units=3)
+    cart.add_item(product)
+
+    monkeypatch.setattr('builtins.input', lambda _: 'n')
+
+    result = check_cart(user, cart)
+
+    assert result == False
+    checkout_stub1.assert_called_once_with(user, cart)
