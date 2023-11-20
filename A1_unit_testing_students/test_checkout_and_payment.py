@@ -29,7 +29,7 @@ def logout_stub1(mocker):
 
 @pytest.fixture
 def logout_stub2(mocker):
-    return mocker.patch('checkout_and_payment.logout', return_value=False)
+    return mocker.patch('logout.logout', return_value=False)
 
 def mimic_input(input_lst):
     i = 0
@@ -43,18 +43,25 @@ def mimic_input(input_lst):
 
 
 
-
+def test_choice_add_item(logout_stub1, capsys, monkeypatch): #Not done
+    login_info = {"username": "Ramanathan", "wallet": 100}
+    monkeypatch.setattr("builtins.input", mimic_input(["28", "l"]))
+    checkoutAndPayment(login_info)
+    out, err = capsys.readouterr()
+    expected_output = "Ice cream added to your cart"
+    assert expected_output in out[2217:2249]
 def test_choice_other_letter(logout_stub1, capsys, monkeypatch):
     login_info = {"username": "Ramanathan", "wallet": 100}
     monkeypatch.setattr("builtins.input", mimic_input(["a", "l"]))
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()
     expected_output = "Invalid input. Please try again."
-    assert expected_output in out[:300]
+    assert expected_output in out[2217:2249]
 
-# def choice_other_number(capsys, monkeypatch):           #händer inget??
-# login_info = {"username": "Ramanathan", "wallet": 100}
-# monkeypatch.setattr("builtins.input", mimic_input(["72"]))
-# checkout_and_payment.checkoutAndPayment(login_info)
-# out, err = capsys.readouterr()
-# assert out[0:300] == "Invalid input. Please try again."         #kan inte se något alls
+def test_choice_other_number(capsys, monkeypatch):           #händer inget??
+    login_info = {"username": "Ramanathan", "wallet": 100}
+    monkeypatch.setattr("builtins.input", mimic_input(["72", "l"]))
+    checkoutAndPayment(login_info)
+    out, err = capsys.readouterr()
+    expected_output = "Invalid input. Please try again."
+    assert expected_output in out[2217:2249]
