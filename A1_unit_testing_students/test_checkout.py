@@ -138,10 +138,29 @@ def test_8_checkout(capfd):
     assert user.wallet == 130
     assert product.units == 0
 
-#def test_9_checkout():
-    #What if the cart contains products that does not exist?
-    #assert False
+def test_9_checkout():
+    #User with wallet with decimal balance
+    user = User(name='John', wallet=100.5)
+    cart = ShoppingCart()
+    product = Product(name='Monitor', price=100, units=3)
+    cart.add_item(product)
 
-#def test_10_checkout():
+    checkout(user, cart)
+
+    assert user.wallet == 0.5
+    assert len(cart.retrieve_item()) == 0
+    assert product.units == 2
+
+def test_10_checkout():
     #Not enough available units (0)
-    #assert False
+    user = User(name='Blake', wallet=100)
+    cart = ShoppingCart()
+    product = Product(name='Rice', price=4, units=0)
+    cart.add_item(product)
+
+    checkout(user, cart)
+
+    assert user.wallet == 96
+    assert len(cart.retrieve_item()) == 0
+    #Note -1 units here
+    assert product.units == -1
