@@ -5,21 +5,6 @@ import shutil
 from checkout_and_payment import load_products_from_csv
 import pytest
 
-#def test_int_input():
-#    assert load_products_from_csv(1) == "Input is not a csv file"
-
-#def test_float_input():
-#    assert load_products_from_csv(0.5) == "Input is not a csv file"
-
-#def test_list_input():
-#    assert load_products_from_csv(["csvfile"]) == "Input is not a csv file"
-
-#def test_string_input():
-#    assert load_products_from_csv("csv") == "Input is not a csv file"
-
-#def test_EC1():
-#    assert load_products_from_csv("non_valid_csv") == "Input is not a valid csv file"
-
 @pytest.fixture(scope='module')
 def copy_csv_file():
     shutil.copy('products.csv', 'copy_products.csv')
@@ -35,6 +20,27 @@ def modify_csv_file():
     shutil.copy('products.csv', 'modify_products.csv')
     yield 'modify_products.csv'
     os.remove('modify_products.csv')
+
+def test_int_input():
+    assert load_products_from_csv(1)
+
+def test_float_input():
+    assert load_products_from_csv(0.5)
+
+def test_list_input():
+    assert load_products_from_csv(["copy_products.csv"])
+
+def test_string_input():
+    assert load_products_from_csv("copy_products.csv")
+
+def test_EC1():
+    assert load_products_from_csv("non_valid.csv")
+
+#def test_EC2():
+    #tom string
+    #Tom csv fil
+    #En kolumn
+    #En csv med en tom rad
 
 
 def test_1_load_products_from_csv(copy_csv_file):
