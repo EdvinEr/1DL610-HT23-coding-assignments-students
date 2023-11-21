@@ -60,7 +60,7 @@ def test_3_check_cart(checkout_stub1, new_cart, monkeypatch):
 
 
 def test_4_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check cart with empty cart
+    # Check cart with empty cart, checkout
     user = User(name="Chris", wallet='100')
     monkeypatch.setattr('builtins.input', lambda _: 'y')
     result = check_cart(user, new_cart)
@@ -101,13 +101,53 @@ def test_6_check_cart(checkout_stub1, new_cart, monkeypatch):
 
 
 def test_7_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check if a lot of products in cart
+    # Check empty cart, no checkout
+    user = User(name="Chris", wallet='100')
+    monkeypatch.setattr('builtins.input', lambda _: 'n')
+    result = check_cart(user, new_cart)
+
+    assert result == False
+    checkout_stub1.assert_not_called()
 
 def test_8_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # User with no money in wallet
+    # User with no money in wallet, no checkout
+    product_list = [Product(name='Rose', price=300, units=3)]
+    monkeypatch.setattr('checkout_and_payment.products', product_list)
+    user = User(name="Tom", wallet='0')
+
+    new_cart.add_item(product_list[0])
+
+    monkeypatch.setattr('builtins.input', lambda _: 'n')
+    result = check_cart(user, new_cart)
+
+    assert result == False
+    checkout_stub1.assert_not_called()
 
 def test_9_check_cart(checkout_stub1, new_cart, monkeypatch):
     # Negative price products
+    product_list = [Product(name='Rose', price=-300, units=3)]
+    monkeypatch.setattr('checkout_and_payment.products', product_list)
+    user = User(name="Tom", wallet='400')
+
+    new_cart.add_item(product_list[0])
+
+    monkeypatch.setattr('builtins.input', lambda _: 'y')
+    result = check_cart(user, new_cart)
+
+    assert result == None
+    checkout_stub1.assert_called_once_with(user, new_cart)
+
 
 def test_10_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Non-integer units
+    # Negative units
+    product_list = [Product(name='Rose', price=-300, units=-1)]
+    monkeypatch.setattr('checkout_and_payment.products', product_list)
+    user = User(name="Tom", wallet='400')
+
+    new_cart.add_item(product_list[0])
+
+    monkeypatch.setattr('builtins.input', lambda _: 'y')
+    result = check_cart(user, new_cart)
+
+    assert result == None
+    checkout_stub1.assert_called_once_with(user, new_cart)
