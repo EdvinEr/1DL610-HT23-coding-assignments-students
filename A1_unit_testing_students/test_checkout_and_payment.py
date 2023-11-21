@@ -4,9 +4,6 @@ import pytest
 import shutil
 import os
 
-print("Current working directory:", os.getcwd())
-print("Directory contents:", os.listdir())
-
 @pytest.fixture(scope='module')
 def copy_json_file():
     shutil.copy('users.json', 'copy_user.json')
@@ -50,6 +47,7 @@ def test_choice_add_item(logout_stub1, capsys, monkeypatch): #Not done
     out, err = capsys.readouterr()
     expected_output = "Ice cream added to your cart"
     assert expected_output in out[2217:2249]
+
 def test_choice_other_letter(logout_stub1, capsys, monkeypatch):
     login_info = {"username": "Ramanathan", "wallet": 100}
     monkeypatch.setattr("builtins.input", mimic_input(["a", "l"]))
