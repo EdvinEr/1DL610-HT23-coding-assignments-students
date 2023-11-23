@@ -6,7 +6,7 @@ import os
 
 @pytest.fixture(scope='module')
 def copy_json_file():
-    shutil.copy('users.json', 'copy_user.json')
+    shutil.copy('users.json', 'copy_users.json')
     print("-----------------setup------------------")
     yield
     os.remove('copy_users.json')
@@ -191,3 +191,26 @@ def test_logout_nonempty_cart(capsys, monkeypatch):
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()      #just to get rid of outputs
     assert logout_cart == [['Ice cream', 10.0, 2]]
+
+def test_updated_wallet_after_purcase(copy_json_file, logout_stub1, capsys, monkeypatch):
+
+    def check_cart_stub4(user, cart):
+        price = cart.get_total_price()
+        user.wallet -= price
+        return True
+
+    cart = ShoppingCart()
+    login_info = {"username": "Ramanathan", "wallet": 100}
+    products = [Product("Ice cream", 10, 2)]
+    monkeypatch.setattr("checkout_and_payment.cart", cart)
+    monkeypatch.setattr("checkout_and_payment.products", products)
+    monkeypatch.setattr("builtins.input", mimic_input(["1", "c", "l"]))
+    monkeypatch.setattr("checkout_and_payment.logout", logout_stub1)
+    checkoutAndPayment(login_info)
+    out, err = capsys.readouterr()      #just to get rid of outputs
+    #assert copy_users.json
+
+
+
+
+
