@@ -52,7 +52,7 @@ def test_string_input():
 #Test a non-existing file
 def test_EC1():
     with pytest.raises(FileNotFoundError):
-        assert load_products_from_csv("non_valid.csv")
+        assert load_products_from_csv("non_existing.csv")
 
 #Test an empty csv file
 def test_EC2(empty_csv_file):
@@ -76,15 +76,11 @@ def test_EC4(copy_csv_file):
     assert products[1].price == 1.0
     assert products[1].units == 15
 
-#Test that all products are included after function call
-def test_EC5(copy_csv_file):
-    products = copy_csv_file
     expected_length = 71
-
     assert len(products) == expected_length
 
 #Test when products have negative or no price
-def test_EC6(modify_csv_file):
+def test_EC5(modify_csv_file):
     with open(modify_csv_file, mode='a', newline='') as csvfile:
         fields = ['Product', 'Price', 'Units']
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -98,7 +94,7 @@ def test_EC6(modify_csv_file):
     assert modified_products[72].price == 0
 
 #Test when products have negative or no units
-def test_EC7(modify_csv_file):
+def test_EC6(modify_csv_file):
     with open(modify_csv_file, mode='a', newline='') as csvfile:
         fields = ['Product', 'Price', 'Units']
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -109,8 +105,8 @@ def test_EC7(modify_csv_file):
     assert modified_products[73].units == -10
     assert modified_products[74].units == 0
 
-#Test when products have no name as strings
-def test_EC8(modify_csv_file):
+#Test when products have integer or floats as name
+def test_EC7(modify_csv_file):
     with open(modify_csv_file, mode='a', newline='') as csvfile:
         fields = ['Product', 'Price', 'Units']
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -122,7 +118,7 @@ def test_EC8(modify_csv_file):
     assert modified_products[76].name == '0.5'
 
 #Test when CSV file has an empty row between products
-def test_EC9(modify_csv_file):
+def test_EC8(modify_csv_file):
     with open(modify_csv_file, mode='a', newline='') as csvfile:
         fields = ['Product', 'Price', 'Units']
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -135,7 +131,7 @@ def test_EC9(modify_csv_file):
     assert modified_products[78].name == 'Popcorn'
 
 #Test when CSV file has one less column
-def test_EC10(modify_csv_file):
+def test_EC9(modify_csv_file):
     with open(modify_csv_file, mode='w', newline='') as csvfile:
         fields = ['Product', 'Price']
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -146,7 +142,7 @@ def test_EC10(modify_csv_file):
         modified_products = load_products_from_csv(modify_csv_file)
 
 #Test when CSV file has one more column
-def test_EC11(modify_csv_file):
+def test_EC10(modify_csv_file):
     with open(modify_csv_file, mode='w', newline='') as csvfile:
         fields = ['Product', 'Price', 'Units', 'Category']
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -158,7 +154,7 @@ def test_EC11(modify_csv_file):
     assert not any('Dairy' in str(product) for product in modified_products)
 
 #Test when product has whitespaces in CSV file
-def test_EC12(modify_csv_file):
+def test_EC11(modify_csv_file):
     # CSV file with values with whitespaces
     with open(modify_csv_file, mode='w', newline='') as csvfile:
         fields = ['Product', 'Price', 'Units', 'Category']

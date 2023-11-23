@@ -9,9 +9,8 @@ import pytest
 def new_cart():
     return ShoppingCart()
 
-
-def test_1_checkout(capfd, monkeypatch, new_cart):
-    #Empty cart
+#Test with an empty cart
+def test_EC1(capfd, monkeypatch, new_cart):
     product_list = []
     user = User(name='Kim', wallet='20')
     monkeypatch.setattr('checkout_and_payment.products', product_list)
@@ -24,10 +23,9 @@ def test_1_checkout(capfd, monkeypatch, new_cart):
     assert len(new_cart.retrieve_item()) == 0
     assert len(product_list) == 0
 
-
-def test_2_checkout(capfd, monkeypatch, new_cart):
-    # Not enough money
-    product_list = [Product(name='Orange', price=200, units=1)]
+#Test with not enough money
+def test_EC2(capfd, monkeypatch, new_cart):
+    product_list = [Product(name='Orange', price=10, units=1)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
     new_cart.add_item(product_list[0])
