@@ -124,6 +124,24 @@ def test_check_cart_empty_cart(logout_stub1, capsys, monkeypatch):
     out, err = capsys.readouterr()  # just to get rid of outputs
     assert check_cart == [[]]
 
+def test_check_cart_nonempty_cart(logout_stub1, capsys, monkeypatch):
+    def check_cart_stub3(user, cart):
+        for item in cart.retrieve_item():
+            p = item.get_product()
+            check_cart.append(p)
+        return True
+
+    check_cart = []
+    cart = ShoppingCart()
+    products = [Product("Ice cream", 10, 2)]
+    login_info = {"username": "Ramanathan", "wallet": 100}
+    monkeypatch.setattr("checkout_and_payment.cart", cart)
+    monkeypatch.setattr("checkout_and_payment.products", products)
+    monkeypatch.setattr("builtins.input", mimic_input(["1", "c", "l", "y"]))
+    monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub3)
+    checkoutAndPayment(login_info)
+    out, err = capsys.readouterr()  # just to get rid of outputs
+    assert check_cart == [['Ice cream', 10.0, 2]]
 
 def test_check_cart_user_info(logout_stub1, capsys, monkeypatch):
     def check_cart_stub3(user, cart):
@@ -148,8 +166,7 @@ def test_logout_empty_cart(capsys,monkeypatch):
 
     logout_cart = []
     login_info = {"username": "Ramanathan", "wallet": 100}
-    product = []
-    monkeypatch.setattr("checkout_and_payment.products", product)
+    monkeypatch.setattr("checkout_and_payment.products", [])
     monkeypatch.setattr("builtins.input", mimic_input(["l"]))
     monkeypatch.setattr("checkout_and_payment.logout", logout_stub2)
     checkoutAndPayment(login_info)
@@ -166,9 +183,9 @@ def test_logout_nonempty_cart(capsys, monkeypatch):
     logout_cart = []
     cart = ShoppingCart()
     login_info = {"username": "Ramanathan", "wallet": 100}
-    product = [Product("Ice cream", 10, 2)]
+    products = [Product("Ice cream", 10, 2)]
     monkeypatch.setattr("checkout_and_payment.cart", cart)
-    monkeypatch.setattr("checkout_and_payment.products", product)
+    monkeypatch.setattr("checkout_and_payment.products", products)
     monkeypatch.setattr("builtins.input", mimic_input(["1","l","y"]))
     monkeypatch.setattr("checkout_and_payment.logout", logout_stub2)
     checkoutAndPayment(login_info)
