@@ -25,21 +25,20 @@ def test_EC1(capfd, monkeypatch, new_cart):
 
 #Test with not enough money
 def test_EC2(capfd, monkeypatch, new_cart):
-    product_list = [Product(name='Orange', price=10, units=1)]
+    product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
-    user = User(name='Kim', wallet=100)
+    user = User(name='Kim', wallet=5)
     new_cart.add_item(product_list[0])
     checkout(user, new_cart)
 
     captured = capfd.readouterr()
     assert captured.out.strip() == f"You don't have enough money to complete the purchase.\nPlease try again!"
-    assert user.wallet == 100
+    assert user.wallet == 5
     assert len(new_cart.retrieve_item()) == 1
     assert len(product_list) == 1
 
-
-def test_3_checkout(capfd, monkeypatch, new_cart):
-    #Successful checkout
+#Test a valid checkout
+def test_EC3(capfd, monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
@@ -55,8 +54,8 @@ def test_3_checkout(capfd, monkeypatch, new_cart):
     assert len(new_cart.retrieve_item()) == 0
     assert product_list[0].units == 2
 
-def test_4_checkout(capfd, monkeypatch, new_cart):
-    #Multiple items in cart
+#Test with multiple items in cart
+def test_EC4(capfd, monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=3), Product(name='Apple', price=20, units=2)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
@@ -74,8 +73,8 @@ def test_4_checkout(capfd, monkeypatch, new_cart):
     assert product_list[0].units == 2
     assert product_list[1].units == 1
 
-def test_5_checkout(monkeypatch, new_cart):
-    #Not enough available units than wanted
+#Test with not enough available units than wanted
+def test_EC5(monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=1)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
@@ -89,9 +88,8 @@ def test_5_checkout(monkeypatch, new_cart):
     assert len(new_cart.retrieve_item()) == 0
     assert len(product_list) == 0
 
-
-def test_6_checkout(capfd, monkeypatch, new_cart):
-    #Negative wallet
+#Test with negative wallet
+def test_EC6(capfd, monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=-100)
@@ -108,9 +106,8 @@ def test_6_checkout(capfd, monkeypatch, new_cart):
     assert len(new_cart.retrieve_item()) == 1
     assert product_list[0].units == 3
 
-
-def test_7_checkout(capfd, monkeypatch, new_cart):
-    #Product with negative price
+#Test with products having negative price
+def test_EC7(capfd, monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=-10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
@@ -124,13 +121,12 @@ def test_7_checkout(capfd, monkeypatch, new_cart):
     expected_output = f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}"
     assert captured.out.strip() == expected_output
 
-    #Note that this means that the user gets 20.
     assert user.wallet == 110
     assert len(new_cart.retrieve_item()) == 0
     assert product_list[0].units == 2
 
-def test_8_checkout(monkeypatch, new_cart):
-    #Checkout when a product only has one unit left
+#Test when only one unit left
+def test_EC8(monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=1)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
@@ -141,8 +137,8 @@ def test_8_checkout(monkeypatch, new_cart):
     assert user.wallet == 90
     assert len(product_list) == 0
 
-def test_9_checkout(monkeypatch, new_cart):
-    #User with wallet with decimal balance
+#Test with wallet having decimal balance
+def test_EC9(monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100.5)
@@ -154,8 +150,8 @@ def test_9_checkout(monkeypatch, new_cart):
     assert len(new_cart.retrieve_item()) == 0
     assert product_list[0].units == 2
 
-def test_10_checkout(monkeypatch, new_cart):
-    #Not enough available units (0)
+#Test with not enough available units from the start
+def test_EC10(monkeypatch, new_cart):
     product_list = [Product(name='Orange', price=10, units=0)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
