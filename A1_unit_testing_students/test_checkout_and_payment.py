@@ -190,6 +190,7 @@ def test_logout_empty_cart(capsys,monkeypatch):
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()      #just to get rid of outputs
     assert logout_cart == [[]]
+    assert out[:-1] == "You have been logged out"
 
 def test_logout_nonempty_cart(capsys, monkeypatch):
     def logout_stub2(cart):
@@ -209,6 +210,7 @@ def test_logout_nonempty_cart(capsys, monkeypatch):
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()      #just to get rid of outputs
     assert logout_cart == [['Ice cream', 10.0, 2]]
+    assert out[62:-1] == "You have been logged out"
 
 def test_call_for_dump(json_dump_mock, open_users_file_stub, logout_stub1, capsys, monkeypatch):
 
