@@ -127,7 +127,7 @@ def checkoutAndPayment(login_info):
                             entry['wallet'] = user.wallet
 
                 with open('users.json', 'w') as file:
-                    json.dump(data, file, indent=2)
+                    json.dump(data, file)
 
                 print("You have been logged out")
                 break
