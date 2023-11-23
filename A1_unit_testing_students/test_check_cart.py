@@ -95,9 +95,8 @@ def test_EC6(checkout_stub1, new_cart, monkeypatch):
     assert result == False
     checkout_stub1.assert_not_called()
 
-#Test with multiple products in cart, checkout
+#Test with an empty cart, no checkout
 def test_EC7(checkout_stub1, new_cart, monkeypatch):
-    # Check empty cart, no checkout
     user = User(name="Kim", wallet='100')
     monkeypatch.setattr('builtins.input', lambda _: 'n')
     result = check_cart(user, new_cart)
