@@ -14,8 +14,8 @@ def checkout_stub1(mocker):
 def new_cart():
     return ShoppingCart()
 
-def test_1_check_cart(monkeypatch, new_cart, checkout_stub1):
-    # Check cart with product in cart, but no checkout
+#Test with product in cart, but no checkout
+def test_EC1(monkeypatch, new_cart, checkout_stub1):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name="Kim", wallet='100')
@@ -27,9 +27,8 @@ def test_1_check_cart(monkeypatch, new_cart, checkout_stub1):
     assert result == False
     checkout_stub1.assert_not_called()
 
-
-def test_2_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check cart with product in cart, checkout
+#Test with product in cart, checkout
+def test_EC2(checkout_stub1, new_cart, monkeypatch):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name="Kim", wallet='100')
@@ -43,8 +42,8 @@ def test_2_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == None
     checkout_stub1.assert_called_once_with(user, new_cart)
 
-def test_3_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check cart with multiple products in cart, checkout
+#Test with multiple products in cart, checkout
+def test_EC3(checkout_stub1, new_cart, monkeypatch):
     product_list = [Product(name='Orange', price=10, units=3), Product(name='Apple', price='2', units='10')]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name="Kim", wallet='100')
@@ -58,9 +57,8 @@ def test_3_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == None
     checkout_stub1.assert_called_once_with(user, new_cart)
 
-
-def test_4_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check cart with empty cart, checkout
+#Test with empty cart, checkout
+def test_EC4(checkout_stub1, new_cart, monkeypatch):
     user = User(name="Kim", wallet='100')
     monkeypatch.setattr('builtins.input', lambda _: 'y')
     result = check_cart(user, new_cart)
@@ -68,9 +66,8 @@ def test_4_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == None
     checkout_stub1.assert_called_once_with(user, new_cart)
 
-
-def test_5_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check cart with multiple products in cart, no checkout
+#Test with multiple products in cart, but no checkout
+def test_EC5(checkout_stub1, new_cart, monkeypatch):
     product_list = [Product(name='Orange', price=10, units=3), Product(name='Apple', price='2', units='10')]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name="Kim", wallet='100')
@@ -84,9 +81,8 @@ def test_5_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == False
     checkout_stub1.assert_not_called()
 
-
-def test_6_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # Check cart wrong input
+#Test to check cart with wrong input
+def test_EC6(checkout_stub1, new_cart, monkeypatch):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name="Kim", wallet='100')
@@ -99,8 +95,8 @@ def test_6_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == False
     checkout_stub1.assert_not_called()
 
-
-def test_7_check_cart(checkout_stub1, new_cart, monkeypatch):
+#Test with multiple products in cart, checkout
+def test_EC7(checkout_stub1, new_cart, monkeypatch):
     # Check empty cart, no checkout
     user = User(name="Kim", wallet='100')
     monkeypatch.setattr('builtins.input', lambda _: 'n')
@@ -109,8 +105,8 @@ def test_7_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == False
     checkout_stub1.assert_not_called()
 
-def test_8_check_cart(checkout_stub1, new_cart, monkeypatch):
-    # User with no money in wallet, no checkout
+#Test with insufficient wallet funds, no checkout
+def test_EC8(checkout_stub1, new_cart, monkeypatch):
     product_list = [Product(name='Orange', price=10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name="Kim", wallet='0')
@@ -123,7 +119,8 @@ def test_8_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == False
     checkout_stub1.assert_not_called()
 
-def test_9_check_cart(checkout_stub1, new_cart, monkeypatch):
+#Test with negative product price
+def test_EC9(checkout_stub1, new_cart, monkeypatch):
     # Negative price products
     product_list = [Product(name='Orange', price=-10, units=3)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
@@ -137,8 +134,8 @@ def test_9_check_cart(checkout_stub1, new_cart, monkeypatch):
     assert result == None
     checkout_stub1.assert_called_once_with(user, new_cart)
 
-
-def test_10_check_cart(checkout_stub1, new_cart, monkeypatch):
+#Test with negative product units
+def test_EC10(checkout_stub1, new_cart, monkeypatch):
     # Negative units
     product_list = [Product(name='Orange', price=10, units=-1)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
