@@ -27,7 +27,7 @@ def test_1_checkout(capfd, monkeypatch, new_cart):
 
 def test_2_checkout(capfd, monkeypatch, new_cart):
     # Not enough money
-    product_list = [Product(name='Pizza', price=200, units=1)]
+    product_list = [Product(name='Orange', price=200, units=1)]
     monkeypatch.setattr('checkout_and_payment.products', product_list)
     user = User(name='Kim', wallet=100)
     new_cart.add_item(product_list[0])
