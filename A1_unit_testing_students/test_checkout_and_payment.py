@@ -111,7 +111,7 @@ def test_printout_choice_other_letter(logout_stub1, capsys, monkeypatch):
 def test_printout_choice_other_number(capsys, monkeypatch):
     login_info = {"username": "Ramanathan", "wallet": 100}
     monkeypatch.setattr("checkout_and_payment.products", [])
-    monkeypatch.setattr("builtins.input", mimic_input(["72", "l"]))
+    monkeypatch.setattr("builtins.input", mimic_input(["5", "l"]))
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()
     expected_output = "Invalid input. Please try again."
