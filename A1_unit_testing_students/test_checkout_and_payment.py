@@ -32,14 +32,6 @@ def copy_json_file():
     print("----------------teardown----------------")
 
 @pytest.fixture
-def check_cart_stub1(mocker):
-    return mocker.patch('checkout_and_payment.check_cart', return_value=False)
-
-@pytest.fixture
-def check_cart_stub2(mocker):
-    return mocker.patch('checkout_and_payment.check_cart', return_value=None)
-
-@pytest.fixture
 def logout_stub1(mocker):
     return mocker.patch('logout.logout', return_value=True)
 
@@ -109,24 +101,26 @@ def test_printout_item_out_of_stock(logout_stub1, capsys, monkeypatch):
 
 def test_printout_choice_other_letter(logout_stub1, capsys, monkeypatch):
     login_info = {"username": "Ramanathan", "wallet": 100}
+    monkeypatch.setattr("checkout_and_payment.products", [])
     monkeypatch.setattr("builtins.input", mimic_input(["a", "l"]))
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()
     expected_output = "Invalid input. Please try again."
-    assert expected_output in out[2217:2249]
+    assert expected_output in out
 
 def test_printout_choice_other_number(capsys, monkeypatch):
     login_info = {"username": "Ramanathan", "wallet": 100}
+    monkeypatch.setattr("checkout_and_payment.products", [])
     monkeypatch.setattr("builtins.input", mimic_input(["72", "l"]))
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()
     expected_output = "Invalid input. Please try again."
-    assert expected_output in out[2217:2249]
+    assert expected_output in out
 
 
 #=============================== Functionality testing ====================================
 def test_check_cart_empty_cart(logout_stub1, capsys, monkeypatch):
-    def check_cart_stub3(user, cart):
+    def check_cart_stub1(user, cart):
         check_cart.append(cart.retrieve_item())
         return False
 
@@ -137,13 +131,13 @@ def test_check_cart_empty_cart(logout_stub1, capsys, monkeypatch):
     monkeypatch.setattr("checkout_and_payment.products", [])
     monkeypatch.setattr("builtins.input", mimic_input(["c", "l"]))
 
-    monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub3)
+    monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub1)
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()  # just to get rid of outputs
     assert check_cart == [[]]
 
 def test_check_cart_nonempty_cart(logout_stub1, capsys, monkeypatch):
-    def check_cart_stub3(user, cart):
+    def check_cart_stub2(user, cart):
         for item in cart.retrieve_item():
             p = item.get_product()
             check_cart.append(p)
@@ -156,7 +150,7 @@ def test_check_cart_nonempty_cart(logout_stub1, capsys, monkeypatch):
     monkeypatch.setattr("checkout_and_payment.cart", cart)
     monkeypatch.setattr("checkout_and_payment.products", products)
     monkeypatch.setattr("builtins.input", mimic_input(["1", "c", "l", "y"]))
-    monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub3)
+    monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub2)
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()  # just to get rid of outputs
     assert check_cart == [['Ice cream', 10.0, 2]]
@@ -188,12 +182,12 @@ def test_logout_empty_cart(capsys,monkeypatch):
     monkeypatch.setattr("builtins.input", mimic_input(["l"]))
     monkeypatch.setattr("checkout_and_payment.logout", logout_stub2)
     checkoutAndPayment(login_info)
-    out, err = capsys.readouterr()      #just to get rid of outputs
+    out, err = capsys.readouterr()
     assert logout_cart == [[]]
     assert out[:-1] == "You have been logged out"
 
 def test_logout_nonempty_cart(capsys, monkeypatch):
-    def logout_stub2(cart):
+    def logout_stub3(cart):
         for item in cart.retrieve_item():
             p = item.get_product()
             logout_cart.append(p)
@@ -206,7 +200,7 @@ def test_logout_nonempty_cart(capsys, monkeypatch):
     monkeypatch.setattr("checkout_and_payment.cart", cart)
     monkeypatch.setattr("checkout_and_payment.products", products)
     monkeypatch.setattr("builtins.input", mimic_input(["1","l","y"]))
-    monkeypatch.setattr("checkout_and_payment.logout", logout_stub2)
+    monkeypatch.setattr("checkout_and_payment.logout", logout_stub3)
     checkoutAndPayment(login_info)
     out, err = capsys.readouterr()      #just to get rid of outputs
     assert logout_cart == [['Ice cream', 10.0, 2]]
@@ -222,10 +216,9 @@ def test_call_for_dump(json_dump_mock, open_users_file_stub, logout_stub1, capsy
 
     cart = ShoppingCart()
     login_info = {"username": "Ramanathan", "wallet": 100}
-    products = [Product("Ice cream", 10, 2)]
     monkeypatch.setattr("checkout_and_payment.cart", cart)
-    monkeypatch.setattr("checkout_and_payment.products", products)
-    monkeypatch.setattr("builtins.input", mimic_input(["1", "c", "l"]))
+    monkeypatch.setattr("checkout_and_payment.products", [])
+    monkeypatch.setattr("builtins.input", mimic_input(["c", "l"]))
     monkeypatch.setattr("checkout_and_payment.logout", logout_stub1)
     monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub4)
     checkoutAndPayment(login_info)
@@ -250,7 +243,7 @@ def test_nonupdated_wallet_after_logout(json_dump_mock, open_users_file_stub, lo
     out, err = capsys.readouterr()      #just to get rid of outputs
     json_dump_mock.assert_called_once_with([{"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 100}], mock.ANY)
 
-def test_updated_wallet_after_one_purcase(json_dump_mock, open_users_file_stub, logout_stub1, capsys, monkeypatch):
+def test_updated_wallet_one_purcase(json_dump_mock, open_users_file_stub, logout_stub1, capsys, monkeypatch):
     def check_cart_stub4(user, cart):
         price = cart.get_total_price()
         user.wallet -= price
@@ -269,7 +262,7 @@ def test_updated_wallet_after_one_purcase(json_dump_mock, open_users_file_stub, 
     out, err = capsys.readouterr()      #just to get rid of outputs
     json_dump_mock.assert_called_once_with([{"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 90}], mock.ANY)
 
-def test_updated_wallet_after_multiple_purcases(json_dump_mock, open_users_file_stub, logout_stub1, capsys, monkeypatch):
+def test_updated_wallet_multiple_purcases(json_dump_mock, open_users_file_stub, logout_stub1, capsys, monkeypatch):
     def check_cart_stub4(user, cart):
         price = cart.get_total_price()
         user.wallet -= price
