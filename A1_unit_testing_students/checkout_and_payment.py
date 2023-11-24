@@ -1,5 +1,6 @@
 import csv
 from logout import logout
+import json
 
 #User class to represent user information
 class User:
@@ -102,15 +103,15 @@ def checkoutAndPayment(login_info):
     user = User(login_info["username"], login_info["wallet"])
     # Display available products
     for i, product in enumerate(products):
-        print(f"{i+1}. {product.name} - ${product.price} - Units: {product.units}")
-    
+        print(f"{i + 1}. {product.name} - ${product.price} - Units: {product.units}")
+
     while True:
-        
+
         # Get user input for product selection in numbers
         choice = input("\nEnter the product number you want to add to your cart (c to check cart, l to logout): ")
-        
+
         if choice == 'c':
-             # Check the cart and proceed to checkout if requested
+            # Check the cart and proceed to checkout if requested
             check = check_cart(user, cart)
             if check is False:
                 continue
@@ -118,6 +119,16 @@ def checkoutAndPayment(login_info):
             # Logout the user
             ask_logout = logout(cart)
             if ask_logout is True:
+
+                with open('users.json', "r") as file:
+                    data = json.load(file)
+                    for entry in data:
+                        if entry["username"] == user.name:
+                            entry['wallet'] = user.wallet
+
+                with open('users.json', 'w') as file:
+                    json.dump(data, file)
+
                 print("You have been logged out")
                 break
             else:
