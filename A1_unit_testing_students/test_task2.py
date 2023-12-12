@@ -2,10 +2,11 @@ import csv
 import os
 import shutil
 import unittest.mock
+from unittest.mock import patch
 import json
 from unittest import mock
-from checkout_and_payment import checkoutAndPayment, ShoppingCart, Product
-from checkout_and_payment import check_cart, checkout, User, Product, ShoppingCart
+from checkout_and_payment import checkoutAndPayment, Product, check_cart, checkout, User, ShoppingCart, load_products_from_csv
+from products import display_csv_as_table, display_filtered_table, searchAndBuyProduct
 import pytest
 
 
@@ -298,5 +299,234 @@ class Test_checkout_and_payment:
         monkeypatch.setattr("checkout_and_payment.check_cart", check_cart_stub4)
         checkoutAndPayment(login_info)
         out, err = capsys.readouterr()  # just to get rid of outputs
-        json_dump_mock.assert_called_once_with([{"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 67}],
-                                               mock.ANY)
+        json_dump_mock.assert_called_once_with([{"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 67}], mock.ANY)
+
+class Test_display_csv_as_table:
+    # Test a non-existing file
+    def test_EC1(self):
+        with pytest.raises(FileNotFoundError):
+            display_csv_as_table("non_existing_file.csv")
+
+    # Test an empty csv file
+    def test_EC2(self, capsys):
+        display_csv_as_table("test_files/test_empty.csv")
+        out, err = capsys.readouterr()
+        assert out == ""
+
+    # Test a csv file containing 4 columns
+    def test_EC7(self, capsys):
+        display_csv_as_table("test_files/test_4_columns.csv")
+        out, err = capsys.readouterr()
+        assert out[0:39] == "['Product', 'Price', 'Units', 'Status']"
+        assert out[40:65] == "['Apple', '2', '10', '1']"
+        assert out[66:92] == "['Banana', '1', '15', '0']"
+        assert out[93:120] == "['Orange', '1.5', '8', '0']"
+
+    # Test a csv file containing varying column amounts
+    def test_EC8(self, capsys):
+        display_csv_as_table("test_files/test_different_column_amounts.csv")
+        out, err = capsys.readouterr()
+        assert out[0:39] == "['Product', 'Price', 'Units', 'Status']"
+        assert out[40:49] == "['Apple']"
+        assert out[50:65] == "['Banana', '1']"
+        assert out[66:88] == "['Orange', '1.5', '8']"
+
+    def test_EC9(self, capsys, copy_csv_file):
+        display_csv_as_table("copy_products.csv")
+        out, err = capsys.readouterr()
+        assert out[0:29] == "['Product', 'Price', 'Units']"
+        assert out[30:50] == "['Apple', '2', '10']"
+        assert out[51:72] == "['Banana', '1', '15']"
+        assert out[73:95] == "['Orange', '1.5', '8']"
+        assert out[96:116] == "['Grapes', '3', '5']"
+
+
+class Test_display_filtered_table:
+    # Test a csv file not containing a 'Product' column
+    def test_EC10(self):
+        with pytest.raises(ValueError):
+            display_filtered_table("test_files/test_no_product_column.csv", "Banana")
+
+    # Test a csv file with 'Product' as the second column
+    def test_EC11(self, capsys):
+        display_filtered_table("test_files/test_product_is_second_column.csv", "Banana")
+        out, err = capsys.readouterr()
+        assert out == "['Price', 'Product', 'Units']\n['1', 'Banana', '15']\n"
+
+    # Test a csv file containing varying column amounts with 'Product' as the second column
+    def test_EC12(self, capsys):
+        display_filtered_table("test_files/test_varying_amounts_product_is_second.csv", "Banana")
+        out, err = capsys.readouterr()
+        assert out == "['Price', 'Product', 'Units']\n['1', 'Banana', '15']\n"
+
+    # Test a non-existing product
+    def test_EC13(self, capsys, copy_csv_file):
+        display_filtered_table("copy_products.csv", "Pancake")
+        out, err = capsys.readouterr()
+        assert out == "['Product', 'Price', 'Units']\n"
+
+    def test_EC14a(self, capsys, copy_csv_file):
+        display_filtered_table("copy_products.csv", "Apple")
+        out, err = capsys.readouterr()
+        assert out == "['Product', 'Price', 'Units']\n['Apple', '2', '10']\n"
+
+    def test_EC14b(self, capsys, copy_csv_file):
+        display_filtered_table("copy_products.csv", "Dish Soap")
+        out, err = capsys.readouterr()
+        assert out == "['Product', 'Price', 'Units']\n['Soap', '1', '12']\n['Dish Soap', '1.5', '12']\n"
+
+class Test_load_products_from_csv:
+    @pytest.fixture(scope='module')
+    def empty_csv_file(self):
+        empty_products = 'empty_products.csv'
+
+        with open(empty_products, 'w', newline='') as csvfile:
+            fields = ['Product', 'Price', 'Units']
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writeheader()
+        products = load_products_from_csv(empty_products)
+        print("----------setup----------")
+        yield products
+        os.remove(empty_products)
+        print("----------teardown----------")
+
+    @pytest.fixture(scope='module')
+    def modify_csv_file(self):
+        shutil.copy('products.csv', 'modify_products.csv')
+        yield 'modify_products.csv'
+        os.remove('modify_products.csv')
+
+    # Test a non-existing file
+    def test_EC1(self):
+        with pytest.raises(FileNotFoundError):
+            assert load_products_from_csv("non_existing.csv")
+
+    # Test when products have integer or floats as name
+    def test_EC7(self, modify_csv_file):
+        with open(modify_csv_file, mode='a', newline='') as csvfile:
+            fields = ['Product', 'Price', 'Units']
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writerow({'Product': 1, 'Price': '3.0', 'Units': '10'})
+            writer.writerow({'Product': 0.5, 'Price': '4.0', 'Units': '3'})
+
+        modified_products = load_products_from_csv(modify_csv_file)
+        assert modified_products[75].name == '1'
+        assert modified_products[76].name == '0.5'
+
+    # Test when CSV file has one less column
+    def test_EC9(self, modify_csv_file):
+        with open(modify_csv_file, mode='w', newline='') as csvfile:
+            fields = ['Product', 'Price']
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writeheader()
+            writer.writerow({'Product': 'Cheese', 'Price': '3.0'})
+
+        with pytest.raises(KeyError):
+            modified_products = load_products_from_csv(modify_csv_file)
+
+    # Test when CSV file has one more column
+    def test_EC10(self, modify_csv_file):
+        with open(modify_csv_file, mode='w', newline='') as csvfile:
+            fields = ['Product', 'Price', 'Units', 'Category']
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writeheader()
+            writer.writerow({'Product': 'Cheese', 'Price': '3.0', 'Units': '4', 'Category': 'Dairy'})
+            writer.writerow({'Product': 'Popcorn', 'Price': '4.0', 'Units': '3', 'Category': 'Snacks'})
+
+        modified_products = load_products_from_csv(modify_csv_file)
+        assert not any('Dairy' in str(product) for product in modified_products)
+
+    # Test when product has whitespaces in CSV file
+    def test_EC11(self, modify_csv_file):
+        # CSV file with values with whitespaces
+        with open(modify_csv_file, mode='w', newline='') as csvfile:
+            fields = ['Product', 'Price', 'Units', 'Category']
+            writer = csv.DictWriter(csvfile, fieldnames=fields)
+            writer.writeheader()
+            writer.writerow({'Product': 'Bread ', 'Price': ' 3.0 ', 'Units': ' 6 '})
+
+        modified_products = load_products_from_csv(modify_csv_file)
+
+        assert modified_products[0].name == 'Bread '
+        assert modified_products[0].price == 3.0
+        assert modified_products[0].units == 6
+
+class Test_searchAndBuyProducts:
+    @pytest.fixture
+    def login_stub(self, mocker):
+        return mocker.patch('products.login', return_value={"username": "Ramanathan", "wallet": 100})
+
+    @pytest.fixture
+    def login_fail_stub(self, mocker):
+        return mocker.patch('products.login', return_value=None, side_effect=[None, None, Exception("Login failed")])
+
+    @pytest.fixture
+    def login_fail_then_succeed_stub(self, mocker):
+        return mocker.patch('products.login', side_effect=[None, {"username": "Ramanathan", "wallet": 100}])
+
+    @pytest.fixture
+    def checkoutAndPayment_stub(self, mocker):
+        return mocker.patch('products.checkoutAndPayment', return_value=None)
+
+    @pytest.fixture
+    def display_csv_as_table_stub(self, mocker):
+        return mocker.patch('products.display_csv_as_table', return_value=None)
+
+    @pytest.fixture
+    def display_filtered_table_stub(self, mocker):
+        return mocker.patch('products.display_filtered_table', return_value=None)
+
+    @pytest.mark.parametrize("user_inputs", [("all", "Y")])
+    def test_with_stubs1(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub,
+                         user_inputs):
+        with patch('builtins.input', side_effect=user_inputs):
+            searchAndBuyProduct()
+
+        login_stub.assert_called_once()
+        display_csv_as_table_stub.assert_called_once()
+        display_filtered_table_stub.assert_not_called()
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
+
+    @pytest.mark.parametrize("user_inputs", [("Apple", "Y")])
+    def test_with_stubs2(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub,
+                         user_inputs):
+        with patch('builtins.input', side_effect=user_inputs):
+            searchAndBuyProduct()
+
+        login_stub.assert_called_once()
+        display_csv_as_table_stub.assert_not_called()
+        display_filtered_table_stub.assert_called_once()
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
+
+    @pytest.mark.parametrize("user_inputs", [("Apple", "N", "Apple", "Y")])
+    def test_with_stubs7(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub,
+                         user_inputs):
+        with patch('builtins.input', side_effect=user_inputs):
+            searchAndBuyProduct()
+
+        login_stub.assert_called_once()
+        display_csv_as_table_stub.assert_not_called()
+        assert display_filtered_table_stub.call_count == 2
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
+
+    @pytest.mark.parametrize("user_inputs", [("Apple", "", "all", "Y")])
+    def test_with_stubs9(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub,
+                         user_inputs):
+        with patch('builtins.input', side_effect=user_inputs):
+            searchAndBuyProduct()
+
+        login_stub.assert_called_once()
+        display_csv_as_table_stub.assert_called_once()
+        display_filtered_table_stub.assert_called_once()
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
+
+    @pytest.mark.parametrize("user_inputs", [("", "Y")])
+    def test_with_stubs10(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub,
+                          user_inputs):
+        with patch('builtins.input', side_effect=user_inputs):
+            searchAndBuyProduct()
+
+        login_stub.assert_called_once()
+        display_csv_as_table_stub.assert_not_called()
+        display_filtered_table_stub.assert_called_once()
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
