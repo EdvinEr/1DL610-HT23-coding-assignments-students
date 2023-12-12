@@ -57,6 +57,79 @@ def load_products_from_csv(file_path):
 products= load_products_from_csv("products.csv")
 cart = ShoppingCart()
 
+
+def change_user_info(user, file_name):
+    username = user.name
+
+    with open(file_name, 'r') as json_file:
+        users_data = json.load(json_file)
+
+    user_index = next((index for index, u in enumerate(users_data) if u["username"] == username), None)
+
+    if user_index is not None:
+        while True:
+            choice = input("\nEnter the number of the information you want to edit (1 for Address, 2 for Phone Number, 3 for Email, 4 for Credit Card, 's' to save changes and exit): ")
+            if choice == "1":
+                new_address = input("Enter your new address: ")
+                users_data[user_index]["address"] = new_address
+                print("Address updated successfully.")
+            elif choice == "2":
+                new_phone_number = input("Enter your new phone number: ")
+                users_data[user_index]["phone_number"] = new_phone_number
+                print("Phone number updated successfully.")
+            elif choice == "3":
+                new_email_address = input("Enter your new email address: ")
+                users_data[user_index]["email_address"] = new_email_address
+                print("Email address updated successfully.")
+            elif choice == "4":
+                while True:
+                    cards = {}
+                    for index, card in enumerate(users_data[user_index]["credit_cards"]):
+                        cards.update({(index + 1): card})
+                        print(f"Card {index + 1}:")
+                        print(f"  Card Number: {card['card_number']}")
+                        print(f"  Expiry Date: {card['expiry_date']}")
+                        print(f"  Name on Card: {card['name_on_card']}")
+                        print(f"  CVV: {card['cvv']}")
+                    card_choice = input("Which card would you like to edit? Press 'c' to cancel.")
+                    if card_choice.isdigit() and int(card_choice) in cards.keys():
+                        card_edit_choice = input("Enter the number of the card information you would like to edit (1 for Card Number, 2 for Expiry Date, 3 for Name on Card, 4 for CVV, 'c' to cancel):")
+                        if card_edit_choice == '1':
+                            new_card_number = input("Enter your new card number: ")
+                            users_data[user_index]["credit_cards"][int(card_choice) - 1]["card_number"] = new_card_number
+                            print("Card number updated successfully.")
+                            break
+                        elif card_edit_choice == '2':
+                            new_expiry_date = input("Enter your new expiry date: ")
+                            users_data[user_index]["credit_cards"][int(card_choice) - 1]["expiry_date"] = new_expiry_date
+                            print("Expiry date updated successfully.")
+                            break
+                        elif card_edit_choice == '3':
+                            new_name_on_card = input("Enter your new name on card: ")
+                            users_data[user_index]["credit_cards"][int(card_choice) - 1]["name_on_card"] = new_name_on_card
+                            print("Name on card updated successfully.")
+                            break
+                        elif card_edit_choice == '4':
+                            new_cvv = input("Enter your new CVV: ")
+                            users_data[user_index]["credit_cards"][int(card_choice) - 1]["cvv"] = new_cvv
+                            print("CVV updated successfully.")
+                            break
+                        elif card_edit_choice == 'c':
+                            break
+                        else:
+                            print("Invalid choice. Please enter a number between 1 and 4.")
+                    elif card_choice == 'c':
+                        break
+                    else:
+                        print("Invalid choice. Please enter a valid card number.")
+            elif choice == "s":
+                break
+            else:
+                print("Invalid choice. Please enter a number between 1 and 4 or 's'. ")
+
+        with open('users_new.json', "w") as write_file:
+            json.dump(users_data, write_file)
+
 # Function to complete the checkout process
 def checkout(user, cart):
     if not cart.items:
@@ -108,25 +181,27 @@ def checkoutAndPayment(login_info):
     while True:
 
         # Get user input for product selection in numbers
-        choice = input("\nEnter the product number you want to add to your cart (c to check cart, l to logout): ")
+        choice = input("\nEnter the product number you want to add to your cart (c to check cart, l to logout, e to edit profile): ")
 
         if choice == 'c':
             # Check the cart and proceed to checkout if requested
             check = check_cart(user, cart)
             if check is False:
                 continue
+        elif choice == 'e':
+            change_user_info(user, 'users_new.json')
         elif choice == 'l':
             # Logout the user
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users.json', "r") as file:
+                with open('users_new.json', "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users.json', 'w') as file:
+                with open('users_new.json', 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")
