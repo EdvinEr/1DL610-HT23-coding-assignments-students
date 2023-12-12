@@ -7,7 +7,6 @@ class User:
     def __init__(self, name, wallet):
         self.name = name
         self.wallet = float(wallet)
-        
 
 
 #Product class to represent product information
@@ -59,15 +58,6 @@ def load_products_from_csv(file_path):
 products= load_products_from_csv("products.csv")
 cart = ShoppingCart()
 
-
-def display_cards(user):
-    if user.cards:
-        print("Your linked cards:")
-        for i, card in enumerate(user.cards, 1):
-            print(f"{i}. {card}")
-    else:
-        print("You do not have any cards linked to your account.")
-
 def get_payment_method():
     while True:
         method = input("Choose your payment method (wallet/card): ").lower()
@@ -76,11 +66,29 @@ def get_payment_method():
         else:
             print("Invalid payment method. Please enter 'wallet' or 'card'.")
 
-def choose_card(cards):
+def choose_card(user, file_name):
+    username = user.name
+
+    with open(file_name, 'r') as json_file:
+        users_data = json.load(json_file)
+
+    user_index = next((index for index, u in enumerate(users_data) if u["username"] == username), None)
+
+    cards = {}
+    for index, card in enumerate(users_data[user_index]["credit_cards"]):
+        cards.update({(index + 1): card})
+        print(f"Card {index + 1}:")
+        print(f"  Card Number: {card['card_number']}")
+        print(f"  Expiry Date: {card['expiry_date']}")
+        print(f"  Name on Card: {card['name_on_card']}")
+        print(f"  CVV: {card['cvv']}")
+
     while True:
-        choice = input("Select a card by entering its number: ")
-        if choice.isdigit() and 0 <= int(choice) <= len(cards):
-            return int(choice) - 1
+        card_choice = input("Select a card by entering its number: ")
+        if card_choice.isdigit() and int(card_choice) in cards.keys():
+            print(f"Card {card_choice} was chosen. ")
+            return int(card_choice) - 1
+
         else:
             print("Invalid choice. Please enter a valid card number")
 
@@ -105,10 +113,9 @@ def checkout(user, cart):
         print("Payment successful using wallet")
 
     elif payment_method == 'card':
-        display_cards(user)
-        card_choice = choose_card(user.cards)
+        card_choice = choose_card(user, "users_new.json")
 
-        print(f"Payment successful using card")
+        print(f"Payment successful using card {card_choice + 1}")
 
     # Update product units and remove products with zero units
     for item in cart.items:
@@ -119,8 +126,13 @@ def checkout(user, cart):
     cart.items = []
 
     # Print a thank you message with the remaining balance
-    print("\n")
-    print(f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}")
+    if payment_method == 'card':
+        print("\n")
+        print(f"Thank you for your purchase!")
+
+    if payment_method == 'wallet':
+        print("\n")
+        print(f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}")
     
 # Function to check the cart and proceed to checkout if requested
 def check_cart(user, cart):
@@ -157,13 +169,13 @@ def checkoutAndPayment(login_info):
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users.json', "r") as file:
+                with open('users_new.json', "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users.json', 'w') as file:
+                with open('users_new.json', 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")
