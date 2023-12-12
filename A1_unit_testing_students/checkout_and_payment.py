@@ -7,6 +7,8 @@ class User:
     def __init__(self, name, wallet):
         self.name = name
         self.wallet = float(wallet)
+        
+
 
 #Product class to represent product information
 class Product:
@@ -57,6 +59,31 @@ def load_products_from_csv(file_path):
 products= load_products_from_csv("products.csv")
 cart = ShoppingCart()
 
+
+def display_cards(user):
+    if user.cards:
+        print("Your linked cards:")
+        for i, card in enumerate(user.cards, 1):
+            print(f"{i}. {card}")
+    else:
+        print("You do not have any cards linked to your account.")
+
+def get_payment_method():
+    while True:
+        method = input("Choose your payment method (wallet/card): ").lower()
+        if method in ['wallet', 'card']:
+            return method
+        else:
+            print("Invalid payment method. Please enter 'wallet' or 'card'.")
+
+def choose_card(cards):
+    while True:
+        choice = input("Select a card by entering its number: ")
+        if choice.isdigit() and 0 <= int(choice) <= len(cards):
+            return int(choice) - 1
+        else:
+            print("Invalid choice. Please enter a valid card number")
+
 # Function to complete the checkout process
 def checkout(user, cart):
     if not cart.items:
@@ -65,14 +92,24 @@ def checkout(user, cart):
 
     total_price = cart.get_total_price()
 
-    if total_price > user.wallet:
-        print("\n")
-        print(f"You don't have enough money to complete the purchase.")
-        print("Please try again!")
-        return
+    payment_method = get_payment_method()
+    if payment_method == 'wallet':
+        if total_price > user.wallet:
+            print("\n")
+            print(f"You don't have enough money to complete the purchase.")
+            print("Please try again!")
+            return
 
-    # Deduct the total price from the user's wallet
-    user.wallet -= total_price
+        # Deduct the total price from the user's wallet
+        user.wallet -= total_price
+        print("Payment successful using wallet")
+
+    elif payment_method == 'card':
+        display_cards(user)
+        card_choice = choose_card(user.cards)
+
+        print(f"Payment successful using card")
+
     # Update product units and remove products with zero units
     for item in cart.items:
         item.units -= 1
@@ -143,4 +180,3 @@ def checkoutAndPayment(login_info):
                 print(f"Sorry, {selected_product.name} is out of stock.")
         else:
             print("\nInvalid input. Please try again.")
-
