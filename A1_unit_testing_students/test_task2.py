@@ -716,3 +716,37 @@ class Test_logout:
         assert result == True
         assert len(cart_with_multiple_elements.items) == 0
         assert create_expected_output(copy_cart) in captured.out
+
+class Test_new_functionality:
+    def test_successful_wallet_payment(self, capfd, monkeypatch, new_cart):
+        product_list = [Product(name='Orange', price=10, units=3)]
+        monkeypatch.setattr('checkout_and_payment.products', product_list)
+        user = User(name='Kim', wallet=100)
+        new_cart.add_item(product_list[0])
+
+        with patch('builtins.input', side_effect=['wallet']):
+            checkout(user, new_cart)
+
+        captured = capfd.readouterr()
+
+        assert captured.out.strip() == f"Payment successful using wallet"
+        assert captured.out.strip() == f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}"
+        assert user.wallet == 90
+        assert len(new_cart.retrieve_item()) == 0
+
+
+    def test_successful_card_payment(self, capfd, monkeypatch, new_cart):
+        product_list = [Product(name='Orange', price=10, units=3)]
+        monkeypatch.setattr('checkout_and_payment.products', product_list)
+        user = User(name='Kim', wallet=100)
+        new_cart.add_item(product_list[0])
+
+        with patch('builtins.input', side_effect=['card', '1']):
+            checkout(user, new_cart)
+
+        captured = capfd.readouterr()
+
+        assert captured.out.strip() == f"Payment successful using card 1"
+        assert captured.out.strip() == f"Thank you for your purchase, {user.name}!"
+        assert user.wallet == 100
+        assert len(new_cart.retrieve_item()) == 0
