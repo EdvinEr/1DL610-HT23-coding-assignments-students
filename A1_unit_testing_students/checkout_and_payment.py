@@ -127,7 +127,7 @@ def change_user_info(user, file_name):
             else:
                 print("Invalid choice. Please enter a number between 1 and 4 or 's'. ")
 
-        with open('users.json', "w") as write_file:
+        with open('users_new.json', "w") as write_file:
             json.dump(users_data, write_file)
 
 # Function to complete the checkout process
@@ -189,19 +189,19 @@ def checkoutAndPayment(login_info):
             if check is False:
                 continue
         elif choice == 'e':
-            change_user_info(user, 'users.json')
+            change_user_info(user, 'users_new.json')
         elif choice == 'l':
             # Logout the user
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users.json', "r") as file:
+                with open('users_new.json', "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users.json', 'w') as file:
+                with open('users_new.json', 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")

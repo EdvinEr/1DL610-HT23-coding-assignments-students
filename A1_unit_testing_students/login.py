@@ -5,7 +5,7 @@ def login():
     username = input("Enter your username:")
     password = input("Enter your password:")
     #Look for user in database
-    with open('users.json', "r") as file:
+    with open('users_new.json', "r") as file:
         data = json.load(file)
         for entry in data:
             if entry["username"] == username:
@@ -45,7 +45,7 @@ def login():
                     new_entry = {"username": username, "password": new_password, "wallet": 0, "address": address, "phone_number": phone_number, "email": email_address, "credit_cards": [{"card_number": card_number, "expiry_date": expiry_date, "name_on_card": name_on_card, "cvv": cvv}]}
                     data.append(new_entry)
 
-                    with open('users.json', "w") as write_file:
+                    with open('users_new.json', "w") as write_file:
                         json.dump(data, write_file)
 
                     print("Successfully registered")

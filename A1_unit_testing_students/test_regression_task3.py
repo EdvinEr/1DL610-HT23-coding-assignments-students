@@ -1,10 +1,31 @@
-import csv, os, shutil, pytest, json, unittest.mock, unittest, copy
+import csv, os, shutil, pytest, json, unittest, copy
 from unittest import mock
 from unittest.mock import patch
 from checkout_and_payment import check_cart, checkout, User, Product, ShoppingCart, checkoutAndPayment, load_products_from_csv
 from logout import logout
 from login import login
 from products import display_csv_as_table, display_filtered_table, searchAndBuyProduct
+
+@pytest.fixture
+def json_dump_mock(monkeypatch):
+    # Create a MagicMock for json.dump
+    mock_dump = mock.MagicMock()
+    monkeypatch.setattr('json.dump', mock_dump)
+    return mock_dump
+
+@pytest.fixture
+def registered_user1():
+    return {"username": "testuser", "password": "Test_Password", "wallet": 0}
+
+@pytest.fixture
+def registered_user2():
+    return {"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 100}
+
+@pytest.fixture
+def login_open_users_file_stub(monkeypatch, registered_user1):
+    # Provide user file content for the login function
+    read_data = json.dumps([registered_user1])
+    monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
 
 @pytest.fixture
 def login_stub(mocker):
@@ -62,23 +83,6 @@ def cart_with_multiple_elements():
     cart.add_item(Product(name="Orange", price=12, units=5))
     return cart
 
-@pytest.fixture
-def json_dump_mock(monkeypatch):
-    # Create a MagicMock for json.dump
-    mock_dump = mock.MagicMock()
-    monkeypatch.setattr('json.dump', mock_dump)
-    return mock_dump
-
-@pytest.fixture
-def registered_user():
-    return {"username": "testuser", "password": "Test_Password", "wallet": 0}
-
-@pytest.fixture
-def login_open_users_file_stub(monkeypatch, registered_user):
-    # Provide user file content for the login function
-    read_data = json.dumps([registered_user])
-    monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
-
 @pytest.fixture(scope='module')
 def empty_csv_file():
     empty_products = 'empty_products.csv'
@@ -102,10 +106,11 @@ def modify_csv_file():
 @pytest.fixture(scope='module')
 def copy_csv_file():
     shutil.copy('products.csv', 'copy_products.csv')
-    print("\n----------------setup----------------\n")
-    yield
+    products = load_products_from_csv('copy_products.csv')
+    print("----------setup----------")
+    yield products
     os.remove('copy_products.csv')
-    print("\n----------------teardown----------------\n")
+    print("----------teardown----------")
 
 @pytest.fixture
 def checkout_stub1(mocker):
@@ -116,20 +121,9 @@ def new_cart():
     return ShoppingCart()
 
 @pytest.fixture
-def json_dump_mock(monkeypatch):
-    # Create a MagicMock for json.dump
-    mock_dump = mock.MagicMock()
-    monkeypatch.setattr('json.dump', mock_dump)
-    return mock_dump
-
-@pytest.fixture
-def registered_user():
-    return {"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 100}
-
-@pytest.fixture
-def open_users_file_stub(monkeypatch, registered_user):
+def open_users_file_stub(monkeypatch, registered_user2):
     # Provide user file content for the login function
-    read_data = json.dumps([registered_user])
+    read_data = json.dumps([registered_user2])
     monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
 
 @pytest.fixture(scope='module')
