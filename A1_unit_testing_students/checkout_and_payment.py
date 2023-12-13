@@ -100,23 +100,14 @@ def checkout(user, cart):
 
     total_price = cart.get_total_price()
 
-    payment_method = get_payment_method()
-    if payment_method == 'wallet':
-        if total_price > user.wallet:
-            print("\n")
-            print(f"You don't have enough money to complete the purchase.")
-            print("Please try again!")
-            return
+    if total_price > user.wallet:
+        print("\n")
+        print(f"You don't have enough money to complete the purchase.")
+        print("Please try again!")
+        return
 
-        # Deduct the total price from the user's wallet
-        user.wallet -= total_price
-        print("Payment successful using wallet")
-
-    elif payment_method == 'card':
-        card_choice = choose_card(user, "users.json")
-
-        print(f"Payment successful using card {card_choice + 1}")
-
+    # Deduct the total price from the user's wallet
+    user.wallet -= total_price
     # Update product units and remove products with zero units
     for item in cart.items:
         item.units -= 1
@@ -126,13 +117,8 @@ def checkout(user, cart):
     cart.items = []
 
     # Print a thank you message with the remaining balance
-    if payment_method == 'card':
-        print("\n")
-        print(f"Thank you for your purchase!")
-
-    if payment_method == 'wallet':
-        print("\n")
-        print(f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}")
+    print("\n")
+    print(f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}")
     
 # Function to check the cart and proceed to checkout if requested
 def check_cart(user, cart):

@@ -31,7 +31,7 @@ def checkoutAndPayment_stub(mocker):
 
 @pytest.fixture
 def display_csv_as_table_stub(mocker):
-        return mocker.patch('products.display_csv_as_table', return_value=None)
+    return mocker.patch('products.display_csv_as_table', return_value=None)
 
 @pytest.fixture
 def display_filtered_table_stub(mocker):
@@ -46,18 +46,27 @@ def new_cart():
     return ShoppingCart()
 
 @pytest.fixture
-def json_dump_mock(self, monkeypatch):
+def json_dump_mock(monkeypatch):
     # Create a MagicMock for json.dump
     mock_dump = mock.MagicMock()
     monkeypatch.setattr('json.dump', mock_dump)
     return mock_dump
 
+@pytest.fixture(scope='module')
+def copy_csv_file():
+    shutil.copy('products.csv', 'copy_products.csv')
+    products = load_products_from_csv('copy_products.csv')
+    print("----------setup----------")
+    yield products
+    os.remove('copy_products.csv')
+    print("----------teardown----------")
+
 @pytest.fixture
-def registered_user(self):
+def registered_user():
     return {"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 100}
 
 @pytest.fixture
-def open_users_file_stub(self, monkeypatch, registered_user):
+def open_users_file_stub(monkeypatch, registered_user):
     # Provide user file content for the login function
     read_data = json.dumps([registered_user])
     monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
@@ -70,11 +79,13 @@ def copy_json_file(self):
     os.remove('copy_users.json')
     print("----------------teardown----------------")
 
+
+
 @pytest.fixture
-def logout_stub1(self, mocker):
+def logout_stub1(mocker):
     return mocker.patch('logout.logout', return_value=True)
 
-def mimic_input(self, input_lst):
+def mimic_input(input_lst):
     i = 0
 
     def _mimic_input(some_input):
@@ -86,7 +97,7 @@ def mimic_input(self, input_lst):
     return _mimic_input
 
 @pytest.fixture(scope='module')
-def empty_csv_file(self):
+def empty_csv_file():
     empty_products = 'empty_products.csv'
 
     with open(empty_products, 'w', newline='') as csvfile:
@@ -100,7 +111,7 @@ def empty_csv_file(self):
     print("----------teardown----------")
 
 @pytest.fixture(scope='module')
-def modify_csv_file(self):
+def modify_csv_file():
     shutil.copy('products.csv', 'modify_products.csv')
     yield 'modify_products.csv'
     os.remove('modify_products.csv')
@@ -114,14 +125,14 @@ def json_dump_mock(monkeypatch):
 
 
 @pytest.fixture
-def registered_user():
+def registered_user1():
     return {"username": "testuser", "password": "Test_Password", "wallet": 0}
 
 
 @pytest.fixture
-def login_open_users_file_stub(monkeypatch, registered_user):
+def login_open_users_file_stub(monkeypatch, registered_user1):
     # Provide user file content for the login function
-    read_data = json.dumps([registered_user])
+    read_data = json.dumps([registered_user1])
     monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
 
 def create_expected_output(cart):
@@ -488,12 +499,15 @@ class Test_load_products_from_csv:
         with open(modify_csv_file, mode='a', newline='') as csvfile:
             fields = ['Product', 'Price', 'Units']
             writer = csv.DictWriter(csvfile, fieldnames=fields)
+            csvfile.write('\n')
             writer.writerow({'Product': 1, 'Price': '3.0', 'Units': '10'})
             writer.writerow({'Product': 0.5, 'Price': '4.0', 'Units': '3'})
 
         modified_products = load_products_from_csv(modify_csv_file)
-        assert modified_products[75].name == '1'
-        assert modified_products[76].name == '0.5'
+        for i in range(len(modified_products)):
+            print(modified_products[i].name)
+        assert modified_products[71].name == '1'
+        assert modified_products[72].name == '0.5'
 
     # Test when CSV file has one less column
     def test_EC9(self, modify_csv_file):
