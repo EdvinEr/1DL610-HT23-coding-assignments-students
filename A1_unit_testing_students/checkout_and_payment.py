@@ -127,7 +127,7 @@ def change_user_info(user, file_name):
             else:
                 print("Invalid choice. Please enter a number between 1 and 4 or 's'. ")
 
-        with open('users_new.json', "w") as write_file:
+        with open(file_name, "w") as write_file:
             json.dump(users_data, write_file)
 
 # Function to complete the checkout process

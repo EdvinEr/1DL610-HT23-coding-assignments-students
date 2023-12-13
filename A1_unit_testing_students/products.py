@@ -32,7 +32,7 @@ def searchAndBuyProduct():
     marker = True
     #Login as a user
     while marker:
-        login_info = login()
+        login_info = login('users_new.json')
         if login_info is not None:
             marker = False
             break

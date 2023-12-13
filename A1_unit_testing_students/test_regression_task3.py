@@ -1,7 +1,7 @@
 import csv, os, shutil, pytest, json, unittest, copy
 from unittest import mock
 from unittest.mock import patch
-from checkout_and_payment import check_cart, checkout, User, Product, ShoppingCart, checkoutAndPayment, load_products_from_csv
+from checkout_and_payment import check_cart, checkout, User, Product, ShoppingCart, checkoutAndPayment, load_products_from_csv, change_user_info
 from logout import logout
 from login import login
 from products import display_csv_as_table, display_filtered_table, searchAndBuyProduct
@@ -132,6 +132,14 @@ def copy_json_file():
     print("-----------------setup------------------")
     yield
     os.remove('copy_users.json')
+    print("----------------teardown----------------")
+
+@pytest.fixture()
+def copy_new_json_file():
+    shutil.copy('users_new.json', 'copy_users_new.json')
+    print("-----------------setup------------------")
+    yield
+    os.remove('copy_users_new.json')
     print("----------------teardown----------------")
 
 @pytest.fixture
@@ -464,7 +472,7 @@ class TestSuiteLogin:
     def test_login_successful(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
         # Run the login function
         with mock.patch('builtins.input', side_effect=user_inputs):
-            login()
+            login('copy_users.json')
 
         # Capture the printed output
         captured = capsys.readouterr()
@@ -481,7 +489,7 @@ class TestSuiteLogin:
     def test_login_with_incorrect_password(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
         # Run the login function
         with mock.patch('builtins.input', side_effect=user_inputs):
-            login()
+            login('copy_users.json')
 
         # Capture the printed output
         captured = capsys.readouterr()
@@ -499,7 +507,7 @@ class TestSuiteLogin:
     def test_login_with_non_existing_username_and_not_register(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
         # Run the login function
         with mock.patch('builtins.input', side_effect=user_inputs):
-            login()
+            login('copy_users.json')
 
         # Capture the printed output
         captured = capsys.readouterr()
@@ -516,7 +524,7 @@ class TestSuiteLogin:
     def test_login_failed_and_register_correct(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
         # Run the login function
         with mock.patch('builtins.input', side_effect=user_inputs):
-            login()
+            login('copy_users.json')
 
         # Capture the printed output
         captured = capsys.readouterr()
@@ -642,3 +650,58 @@ class TestSuiteSearchAndBuyProduct:
         display_csv_as_table_stub.assert_not_called()
         display_filtered_table_stub.assert_not_called()
         checkoutAndPayment_stub.assert_not_called()
+
+class TestSuiteChangeUserInfo:
+    # Test changing the address, phone number and email address for a user
+    @pytest.mark.parametrize("user_inputs", [("1", "new_address", "2", "123", "3", "new.email@example.com", "s")])
+    def test_EC1(self, user_inputs, copy_new_json_file):
+        with patch('builtins.input', side_effect=user_inputs):
+            user = User("Ramanathan", 100.0)
+            change_user_info(user, "copy_users_new.json")
+
+        with open("copy_users_new.json", 'r') as json_file:
+            users_data = json.load(json_file)
+
+        user_index = next((index for index, u in enumerate(users_data) if u["username"] == "Ramanathan"), None)
+
+        assert users_data[user_index]["address"] == "new_address"
+        assert users_data[user_index]["phone_number"] == "123"
+        assert users_data[user_index]["email_address"] == "new.email@example.com"
+
+    # Test changing the credit card information for a user
+    @pytest.mark.parametrize("user_inputs", [("4", "c", "4", "2", "1", "1111 2222 3333 4444", "4", "2", "2", "1/1", "4", "1", "3", "Ram", "4", "1", "4", "987", "4", "3", "c", "s")])
+    def test_EC2(self, user_inputs, copy_new_json_file):
+        with patch('builtins.input', side_effect=user_inputs):
+            user = User("Ramanathan", 100.0)
+            change_user_info(user, "copy_users_new.json")
+
+        with open("copy_users_new.json", 'r') as json_file:
+            users_data = json.load(json_file)
+
+        user_index = next((index for index, u in enumerate(users_data) if u["username"] == "Ramanathan"), None)
+
+        assert users_data[user_index]["credit_cards"][1]["card_number"] == "1111 2222 3333 4444"
+        assert users_data[user_index]["credit_cards"][1]["expiry_date"] == "1/1"
+        assert users_data[user_index]["credit_cards"][0]["name_on_card"] == "Ram"
+        assert users_data[user_index]["credit_cards"][0]["cvv"] == "987"
+
+    # Test creating a new user
+    @pytest.mark.parametrize("user_inputs", [("new_user", "Password123*", "Y", "Password123*", "new_address", "123 456 78 90", "new_email@example.com", "1234 1234 1234 1234", "1/1", "new_name", "123")])
+    def test_EC3(self, user_inputs, copy_new_json_file):
+        with patch('builtins.input', side_effect=user_inputs):
+            user = User("Ramanathan", 100.0)
+            login('copy_users_new.json')
+
+        with open("copy_users_new.json", 'r') as json_file:
+            users_data = json.load(json_file)
+
+        user_index = next((index for index, u in enumerate(users_data) if u["username"] == "new_user"), None)
+        
+        assert users_data[user_index]["password"] == "Password123*"
+        assert users_data[user_index]["address"] == "new_address"
+        assert users_data[user_index]["phone_number"] == "123 456 78 90"
+        assert users_data[user_index]["email_address"] == "new_email@example.com"
+        assert users_data[user_index]["credit_cards"][0]["card_number"] == "1234 1234 1234 1234"
+        assert users_data[user_index]["credit_cards"][0]["expiry_date"] == "1/1"
+        assert users_data[user_index]["credit_cards"][0]["name_on_card"] == "new_name"
+        assert users_data[user_index]["credit_cards"][0]["cvv"] == "123"
