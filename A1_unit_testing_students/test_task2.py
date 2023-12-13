@@ -4,20 +4,164 @@ import shutil
 import unittest.mock
 from unittest.mock import patch
 import json
+import copy
 from unittest import mock
 from checkout_and_payment import checkoutAndPayment, Product, check_cart, checkout, User, ShoppingCart, load_products_from_csv
 from products import display_csv_as_table, display_filtered_table, searchAndBuyProduct
 import pytest
+from login import login
+from logout import logout
 
+
+@pytest.fixture
+def login_stub(mocker):
+    return mocker.patch('products.login', return_value={"username": "Ramanathan", "wallet": 100})
+
+@pytest.fixture
+def login_fail_stub(mocker):
+    return mocker.patch('products.login', return_value=None, side_effect=[None, None, Exception("Login failed")])
+
+@pytest.fixture
+def login_fail_then_succeed_stub(mocker):
+    return mocker.patch('products.login', side_effect=[None, {"username": "Ramanathan", "wallet": 100}])
+
+@pytest.fixture
+def checkoutAndPayment_stub(mocker):
+    return mocker.patch('products.checkoutAndPayment', return_value=None)
+
+@pytest.fixture
+def display_csv_as_table_stub(mocker):
+        return mocker.patch('products.display_csv_as_table', return_value=None)
+
+@pytest.fixture
+def display_filtered_table_stub(mocker):
+    return mocker.patch('products.display_filtered_table', return_value=None)
+
+@pytest.fixture
+def checkout_stub1(mocker):
+    return mocker.patch('checkout_and_payment.checkout', return_value=None)
+
+@pytest.fixture
+def new_cart():
+    return ShoppingCart()
+
+@pytest.fixture
+def json_dump_mock(self, monkeypatch):
+    # Create a MagicMock for json.dump
+    mock_dump = mock.MagicMock()
+    monkeypatch.setattr('json.dump', mock_dump)
+    return mock_dump
+
+@pytest.fixture
+def registered_user(self):
+    return {"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 100}
+
+@pytest.fixture
+def open_users_file_stub(self, monkeypatch, registered_user):
+    # Provide user file content for the login function
+    read_data = json.dumps([registered_user])
+    monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
+
+@pytest.fixture(scope='module')
+def copy_json_file(self):
+    shutil.copy('users.json', 'copy_users.json')
+    print("-----------------setup------------------")
+    yield
+    os.remove('copy_users.json')
+    print("----------------teardown----------------")
+
+@pytest.fixture
+def logout_stub1(self, mocker):
+    return mocker.patch('logout.logout', return_value=True)
+
+def mimic_input(self, input_lst):
+    i = 0
+
+    def _mimic_input(some_input):
+        nonlocal i
+        mimicked_input = input_lst[i]
+        i += 1
+        return mimicked_input
+
+    return _mimic_input
+
+@pytest.fixture(scope='module')
+def empty_csv_file(self):
+    empty_products = 'empty_products.csv'
+
+    with open(empty_products, 'w', newline='') as csvfile:
+        fields = ['Product', 'Price', 'Units']
+        writer = csv.DictWriter(csvfile, fieldnames=fields)
+        writer.writeheader()
+    products = load_products_from_csv(empty_products)
+    print("----------setup----------")
+    yield products
+    os.remove(empty_products)
+    print("----------teardown----------")
+
+@pytest.fixture(scope='module')
+def modify_csv_file(self):
+    shutil.copy('products.csv', 'modify_products.csv')
+    yield 'modify_products.csv'
+    os.remove('modify_products.csv')
+
+@pytest.fixture
+def json_dump_mock(monkeypatch):
+    # Create a MagicMock for json.dump
+    mock_dump = mock.MagicMock()
+    monkeypatch.setattr('json.dump', mock_dump)
+    return mock_dump
+
+
+@pytest.fixture
+def registered_user():
+    return {"username": "testuser", "password": "Test_Password", "wallet": 0}
+
+
+@pytest.fixture
+def login_open_users_file_stub(monkeypatch, registered_user):
+    # Provide user file content for the login function
+    read_data = json.dumps([registered_user])
+    monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
+
+def create_expected_output(cart):
+    expected_output = "Your cart is not empty.You have following items\n"
+    for i in cart.retrieve_item():
+        product = i.get_product()
+        expected_output += f"['{product[0]}', {product[1]}, {product[2]}]\n"
+    return expected_output
+
+
+@pytest.fixture
+def cart_empty():
+    return ShoppingCart()
+
+
+@pytest.fixture
+def cart_with_one_element():
+    cart = ShoppingCart()
+    cart.add_item(Product(name="Apple", price=5, units=10))
+    return cart
+
+
+@pytest.fixture
+def cart_with_two_elements():
+    cart = ShoppingCart()
+    cart.add_item(Product(name="Apple", price=5, units=10))
+    cart.add_item(Product(name="Banana", price=10, units=2))
+    return cart
+
+
+@pytest.fixture
+def cart_with_multiple_elements():
+    cart = ShoppingCart()
+    cart.add_item(Product(name="Apple", price=5, units=10))
+    cart.add_item(Product(name="Banana", price=10, units=2))
+    cart.add_item(Product(name="Orange", price=12, units=5))
+    return cart
 
 class Test_checkcart:
-    @pytest.fixture
-    def checkout_stub1(self, mocker):
-        return mocker.patch('checkout_and_payment.checkout', return_value=None)
 
-    @pytest.fixture
-    def new_cart(self):
-        return ShoppingCart()
     def test_EC1(self, monkeypatch, new_cart, checkout_stub1):
         product_list = [Product(name='Orange', price=10, units=3)]
         monkeypatch.setattr('checkout_and_payment.products', product_list)
@@ -85,9 +229,6 @@ class Test_checkcart:
         checkout_stub1.assert_called_once_with(user, new_cart)
 
 class Test_checkout:
-    @pytest.fixture
-    def new_cart(self):
-        return ShoppingCart()
 
     # Test with an empty cart
     def test_EC1(self ,capfd, monkeypatch, new_cart):
@@ -165,46 +306,6 @@ class Test_checkout:
 
 
 class Test_checkout_and_payment:
-    @pytest.fixture
-    def json_dump_mock(self, monkeypatch):
-        # Create a MagicMock for json.dump
-        mock_dump = mock.MagicMock()
-        monkeypatch.setattr('json.dump', mock_dump)
-        return mock_dump
-
-    @pytest.fixture
-    def registered_user(self):
-        return {"username": "Ramanathan", "password": "Notaproblem23*", "wallet": 100}
-
-    @pytest.fixture
-    def open_users_file_stub(self, monkeypatch, registered_user):
-        # Provide user file content for the login function
-        read_data = json.dumps([registered_user])
-        monkeypatch.setattr('builtins.open', mock.mock_open(read_data=read_data))
-
-    @pytest.fixture(scope='module')
-    def copy_json_file(self):
-        shutil.copy('users.json', 'copy_users.json')
-        print("-----------------setup------------------")
-        yield
-        os.remove('copy_users.json')
-        print("----------------teardown----------------")
-
-    @pytest.fixture
-    def logout_stub1(self, mocker):
-        return mocker.patch('logout.logout', return_value=True)
-
-    def mimic_input(self, input_lst):
-        i = 0
-
-        def _mimic_input(some_input):
-            nonlocal i
-            mimicked_input = input_lst[i]
-            i += 1
-            return mimicked_input
-
-        return _mimic_input
-
     def test_logout_nonempty_cart(self, capsys, monkeypatch):
         def logout_stub3(cart):
             for item in cart.retrieve_item():
@@ -376,25 +477,6 @@ class Test_display_filtered_table:
         assert out == "['Product', 'Price', 'Units']\n['Soap', '1', '12']\n['Dish Soap', '1.5', '12']\n"
 
 class Test_load_products_from_csv:
-    @pytest.fixture(scope='module')
-    def empty_csv_file(self):
-        empty_products = 'empty_products.csv'
-
-        with open(empty_products, 'w', newline='') as csvfile:
-            fields = ['Product', 'Price', 'Units']
-            writer = csv.DictWriter(csvfile, fieldnames=fields)
-            writer.writeheader()
-        products = load_products_from_csv(empty_products)
-        print("----------setup----------")
-        yield products
-        os.remove(empty_products)
-        print("----------teardown----------")
-
-    @pytest.fixture(scope='module')
-    def modify_csv_file(self):
-        shutil.copy('products.csv', 'modify_products.csv')
-        yield 'modify_products.csv'
-        os.remove('modify_products.csv')
 
     # Test a non-existing file
     def test_EC1(self):
@@ -452,30 +534,6 @@ class Test_load_products_from_csv:
         assert modified_products[0].units == 6
 
 class Test_searchAndBuyProducts:
-    @pytest.fixture
-    def login_stub(self, mocker):
-        return mocker.patch('products.login', return_value={"username": "Ramanathan", "wallet": 100})
-
-    @pytest.fixture
-    def login_fail_stub(self, mocker):
-        return mocker.patch('products.login', return_value=None, side_effect=[None, None, Exception("Login failed")])
-
-    @pytest.fixture
-    def login_fail_then_succeed_stub(self, mocker):
-        return mocker.patch('products.login', side_effect=[None, {"username": "Ramanathan", "wallet": 100}])
-
-    @pytest.fixture
-    def checkoutAndPayment_stub(self, mocker):
-        return mocker.patch('products.checkoutAndPayment', return_value=None)
-
-    @pytest.fixture
-    def display_csv_as_table_stub(self, mocker):
-        return mocker.patch('products.display_csv_as_table', return_value=None)
-
-    @pytest.fixture
-    def display_filtered_table_stub(self, mocker):
-        return mocker.patch('products.display_filtered_table', return_value=None)
-
     @pytest.mark.parametrize("user_inputs", [("all", "Y")])
     def test_with_stubs1(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub,
                          user_inputs):
@@ -530,3 +588,117 @@ class Test_searchAndBuyProducts:
         display_csv_as_table_stub.assert_not_called()
         display_filtered_table_stub.assert_called_once()
         checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
+
+class Test_login:
+    @pytest.mark.parametrize("user_inputs", [("testuser", "Test_Password")])
+    def test_login_successful(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
+        # Run the login function
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            login()
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        # Assert the output contains the expected message
+        assert "Successfully logged in" in captured.out
+
+        json_dump_mock.assert_not_called()
+
+    @pytest.mark.parametrize("user_inputs", [
+        ("testuser", "wrongpassword")
+    ])
+    def test_login_with_incorrect_password(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
+        # Run the login function
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            login()
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        # Assert the output contains the expected message
+        assert "Either username or password were incorrect" in captured.out
+
+        json_dump_mock.assert_not_called()
+
+    @pytest.mark.parametrize("user_inputs", [
+        ("non_existing_user", "password", "Y", "password_missing_capital_letter", "Correct_New_Password"),
+        ("non_existing_user", "password", "Y", "7L%tter", "Correct_New_Password"),
+        ("non_existing_user", "password", "Y", "password_missing_capital_letter", "PasswordMissingSpecialCharacter",
+         "Pw$hort", "Correct_New_Password")
+    ])
+    def test_login_failed_and_retry_register(self, user_inputs, login_open_users_file_stub, json_dump_mock, capsys):
+        # Run the login function
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            login()
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        # Assert the output contains the expected message
+        assert "Username does not exists." in captured.out
+        assert "Password must have at least 1 capital letter, 1 special symbol and be 8 characters long." in captured.out
+        assert "Successfully registered" in captured.out
+
+        json_dump_mock.assert_called_once()
+class Test_logout:
+    def test_logout_with_empty_cart(self, cart_empty):
+        result = logout(cart=cart_empty)
+
+        assert result == True
+        assert len(cart_empty.items) == 0
+
+    @pytest.mark.parametrize("user_inputs", ["n"])
+    def test_cancel_logout_cart_with_one_element(self, user_inputs, cart_with_one_element, capsys):
+        copy_cart = copy.deepcopy(cart_with_one_element)
+
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            result = logout(cart=cart_with_one_element)
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        assert result == False
+        assert len(cart_with_one_element.items) == len(copy_cart.items)
+        assert create_expected_output(copy_cart) in captured.out
+
+    @pytest.mark.parametrize("user_inputs", ["Yes"])
+    def test_logout_clear_cart_with_one_element(self, user_inputs, cart_with_one_element, capsys):
+        copy_cart = copy.deepcopy(cart_with_one_element)
+
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            result = logout(cart=cart_with_one_element)
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        assert result == True
+        assert len(cart_with_one_element.items) == 0
+        assert create_expected_output(copy_cart) in captured.out
+
+    @pytest.mark.parametrize("user_inputs", ["y"])
+    def test_logout_clear_cart_with_two_elements(self, user_inputs, cart_with_two_elements, capsys):
+        copy_cart = copy.deepcopy(cart_with_two_elements)
+
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            result = logout(cart=cart_with_two_elements)
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        assert result == True
+        assert len(cart_with_two_elements.items) == 0
+        assert create_expected_output(copy_cart) in captured.out
+
+    @pytest.mark.parametrize("user_inputs", ["y"])
+    def test_logout_clear_cart_with_multiple_elements(self, user_inputs, cart_with_multiple_elements, capsys):
+        copy_cart = copy.deepcopy(cart_with_multiple_elements)
+
+        with mock.patch('builtins.input', side_effect=user_inputs):
+            result = logout(cart=cart_with_multiple_elements)
+
+        # Capture the printed output
+        captured = capsys.readouterr()
+
+        assert result == True
+        assert len(cart_with_multiple_elements.items) == 0
+        assert create_expected_output(copy_cart) in captured.out

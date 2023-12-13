@@ -113,7 +113,7 @@ def checkout(user, cart):
         print("Payment successful using wallet")
 
     elif payment_method == 'card':
-        card_choice = choose_card(user, "users_new.json")
+        card_choice = choose_card(user, "users.json")
 
         print(f"Payment successful using card {card_choice + 1}")
 
@@ -169,13 +169,13 @@ def checkoutAndPayment(login_info):
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users_new.json', "r") as file:
+                with open('users.json', "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users_new.json', 'w') as file:
+                with open('users.json', 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")
