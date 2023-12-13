@@ -6,7 +6,7 @@ from unittest.mock import patch
 import json
 import copy
 from unittest import mock
-from checkout_and_payment import checkoutAndPayment, Product, check_cart, checkout, User, ShoppingCart, load_products_from_csv
+from checkout_and_payment import checkoutAndPayment, Product, check_cart, checkout, User, ShoppingCart, load_products_from_csv, choose_card
 from products import display_csv_as_table, display_filtered_table, searchAndBuyProduct
 import pytest
 from login import login
@@ -170,6 +170,10 @@ def cart_with_multiple_elements():
     cart.add_item(Product(name="Banana", price=10, units=2))
     cart.add_item(Product(name="Orange", price=12, units=5))
     return cart
+
+@pytest.fixture
+def choose_card(mocker):
+    return mocker.patch('checkout_and_payment.choose_card', return_value=0)
 
 class Test_checkcart:
 
@@ -728,25 +732,25 @@ class Test_new_functionality:
             checkout(user, new_cart)
 
         captured = capfd.readouterr()
-
-        assert captured.out.strip() == f"Payment successful using wallet"
-        assert captured.out.strip() == f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}"
+        expected_output = f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}"
+        assert captured.out.strip() == expected_output
         assert user.wallet == 90
         assert len(new_cart.retrieve_item()) == 0
 
 
-    def test_successful_card_payment(self, capfd, monkeypatch, new_cart):
+    def test_successful_card_payment(self, capfd, monkeypatch, new_cart, choose_card):
         product_list = [Product(name='Orange', price=10, units=3)]
         monkeypatch.setattr('checkout_and_payment.products', product_list)
         user = User(name='Kim', wallet=100)
         new_cart.add_item(product_list[0])
 
-        with patch('builtins.input', side_effect=['card', '1']):
+        with patch('builtins.input', side_effect=['card']):
             checkout(user, new_cart)
 
         captured = capfd.readouterr()
+        expected_output = "Payment successful using card 1\nThank you for your purchase!"
 
-        assert captured.out.strip() == f"Payment successful using card 1"
-        assert captured.out.strip() == f"Thank you for your purchase, {user.name}!"
+        assert captured.out.strip() == expected_output
         assert user.wallet == 100
         assert len(new_cart.retrieve_item()) == 0
+

@@ -100,14 +100,22 @@ def checkout(user, cart):
 
     total_price = cart.get_total_price()
 
-    if total_price > user.wallet:
-        print("\n")
-        print(f"You don't have enough money to complete the purchase.")
-        print("Please try again!")
-        return
+    payment_method = get_payment_method()
+    if payment_method == 'wallet':
+        if total_price > user.wallet:
+            print("\n")
+            print(f"You don't have enough money to complete the purchase.")
+            print("Please try again!")
+            return
 
-    # Deduct the total price from the user's wallet
-    user.wallet -= total_price
+        # Deduct the total price from the user's wallet
+        user.wallet -= total_price
+
+    elif payment_method == 'card':
+        card_choice = choose_card(user, "users_new.json")
+
+        print(f"Payment successful using card {card_choice + 1}")
+
     # Update product units and remove products with zero units
     for item in cart.items:
         item.units -= 1
@@ -117,8 +125,11 @@ def checkout(user, cart):
     cart.items = []
 
     # Print a thank you message with the remaining balance
-    print("\n")
-    print(f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}")
+    if payment_method == 'card':
+        print("Thank you for your purchase!")
+
+    if payment_method == 'wallet':
+        print(f"Thank you for your purchase, {user.name}! Your remaining balance is {user.wallet}")
     
 # Function to check the cart and proceed to checkout if requested
 def check_cart(user, cart):
@@ -155,13 +166,13 @@ def checkoutAndPayment(login_info):
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users.json', "r") as file:
+                with open('users_new.json', "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users.json', 'w') as file:
+                with open('users_new.json', 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")
