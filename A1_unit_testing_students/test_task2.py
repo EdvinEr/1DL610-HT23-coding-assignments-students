@@ -172,8 +172,22 @@ def cart_with_multiple_elements():
     return cart
 
 @pytest.fixture
-def choose_card(mocker):
+def mock_choose_card1(mocker):
     return mocker.patch('checkout_and_payment.choose_card', return_value=0)
+
+@pytest.fixture
+def mock_choose_card2(mocker):
+    return mocker.patch('checkout_and_payment.choose_card', return_value=1)
+
+
+@pytest.fixture(scope='module')
+def mock_copy_json_file():
+    shutil.copy('users_new.json', 'copy_users_new.json')
+    print("-----------------setup------------------")
+    yield
+    os.remove('copy_users_new.json')
+    print("----------------teardown----------------")
+
 
 class Test_checkcart:
 
@@ -738,7 +752,7 @@ class Test_new_functionality:
         assert len(new_cart.retrieve_item()) == 0
 
 
-    def test_successful_card_payment(self, capfd, monkeypatch, new_cart, choose_card):
+    def test_successful_card_payment(self, capfd, monkeypatch, new_cart, mock_choose_card1):
         product_list = [Product(name='Orange', price=10, units=3)]
         monkeypatch.setattr('checkout_and_payment.products', product_list)
         user = User(name='Kim', wallet=100)
@@ -753,4 +767,29 @@ class Test_new_functionality:
         assert captured.out.strip() == expected_output
         assert user.wallet == 100
         assert len(new_cart.retrieve_item()) == 0
+
+    def test_choose_card(self, capfd, mock_choose_card2, mock_copy_json_file):
+        user = User(name='Steve', wallet=100)
+
+        with patch('builtins.input', side_effect=['2']):
+            card_choice = choose_card(user, "copy_users_new.json")
+
+
+        captured = capfd.readouterr()
+
+        expected_output = (
+            "Card 1:\n"
+            "  Card Number: 4111 1111 1111 1111\n"
+            "  Expiry Date: 1/1\n"
+            "  Name on Card: Steve\n"
+            "  CVV: 123\n"
+            "Card 2:\n"
+            "  Card Number: 5222 2222 2222 2222\n"
+            "  Expiry Date: 08/24\n"
+            "  Name on Card: Steve\n"
+            "  CVV: 456\n"
+            "Card 2 was chosen."
+        )
+
+        assert captured.out.strip() == expected_output
 
