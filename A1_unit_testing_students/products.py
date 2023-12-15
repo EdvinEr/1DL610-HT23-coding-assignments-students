@@ -3,6 +3,8 @@ import re
 from checkout_and_payment import checkoutAndPayment
 import csv
 
+
+
 #Display all the products
 def display_csv_as_table(csv_filename):
     with open(csv_filename, 'r', newline='') as csvfile:
