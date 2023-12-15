@@ -171,7 +171,7 @@ def check_cart(user, cart):
         return False
 
 # Main function for the shopping and checkout process
-def checkoutAndPayment(login_info):
+def checkoutAndPayment(login_info, file_name):
     # Create/retrieve a user using login information
     user = User(login_info["username"], login_info["wallet"])
     # Display available products
@@ -189,19 +189,19 @@ def checkoutAndPayment(login_info):
             if check is False:
                 continue
         elif choice == 'e':
-            change_user_info(user, 'users_new.json')
+            change_user_info(user, file_name)
         elif choice == 'l':
             # Logout the user
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users_new.json', "r") as file:
+                with open(file_name, "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users_new.json', 'w') as file:
+                with open(file_name, 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")

@@ -234,7 +234,7 @@ class TestSuiteCheckoutAndPayment:
         login_info = {"username": "Ramanathan", "wallet": 100}
         monkeypatch.setattr("checkout_and_payment.products", [])
         monkeypatch.setattr("builtins.input", mimic_input(["l"]))
-        checkoutAndPayment(login_info)
+        checkoutAndPayment(login_info,"users.json")
         out, err = capsys.readouterr()
         expected_output = "You have been logged out"
         assert expected_output in out[:28]
@@ -244,7 +244,7 @@ class TestSuiteCheckoutAndPayment:
         products = [Product("Ice cream", 10, 2)]
         monkeypatch.setattr("checkout_and_payment.products", products)
         monkeypatch.setattr("builtins.input", mimic_input(["l"]))
-        checkoutAndPayment(login_info)
+        checkoutAndPayment(login_info,"users.json")
         out, err = capsys.readouterr()
         expected_o = "1. Ice cream - $10.0 - Units: 2"
         assert expected_o in out[:31]
@@ -254,7 +254,7 @@ class TestSuiteCheckoutAndPayment:
         products = [Product("Ice cream", 10, 2), Product("Chocolate", 15, 5), Product("Popcorns", 8, 3)]
         monkeypatch.setattr("checkout_and_payment.products", products)
         monkeypatch.setattr("builtins.input", mimic_input(["l"]))
-        checkoutAndPayment(login_info)
+        checkoutAndPayment(login_info,"users.json")
         out, err = capsys.readouterr()
         expected_o = "1. Ice cream - $10.0 - Units: 2\n2. Chocolate - $15.0 - Units: 5\n3. Popcorns - $8.0 - Units: 3"
         assert expected_o in out[:96]
@@ -266,7 +266,7 @@ class TestSuiteCheckoutAndPayment:
         monkeypatch.setattr("checkout_and_payment.products", products)
         monkeypatch.setattr("checkout_and_payment.cart", cart)
         monkeypatch.setattr("builtins.input", mimic_input(["1", "l", "y"]))
-        checkoutAndPayment(login_info)
+        checkoutAndPayment(login_info,"users.json")
         out, err = capsys.readouterr()
         expected_output = "Ice cream added to your cart."
         assert expected_output in out[30:]
@@ -278,7 +278,7 @@ class TestSuiteCheckoutAndPayment:
         monkeypatch.setattr("checkout_and_payment.products", products)
         monkeypatch.setattr("checkout_and_payment.cart", cart)
         monkeypatch.setattr("builtins.input", mimic_input(["1", "l", "y"]))
-        checkoutAndPayment(login_info)
+        checkoutAndPayment(login_info,"users.json")
         out, err = capsys.readouterr()
         expected_output = "Sorry, Ice cream is out of stock."
         assert expected_output in out[30:]
@@ -591,32 +591,32 @@ class TestSuiteSearchAndBuyProduct:
     @pytest.mark.parametrize("user_inputs", [("all", "Y")])
     def test_with_stubs1(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub, user_inputs):
         with patch('builtins.input', side_effect=user_inputs):
-            searchAndBuyProduct()
+            searchAndBuyProduct("users.json")
 
         login_stub.assert_called_once()
         display_csv_as_table_stub.assert_called_once()
         display_filtered_table_stub.assert_not_called()
-        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100 })
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100 }, "users.json")
 
     @pytest.mark.parametrize("user_inputs", [("Apple", "Y")])
     def test_with_stubs2(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub, user_inputs):
         with patch('builtins.input', side_effect=user_inputs):
-            searchAndBuyProduct()
+            searchAndBuyProduct("users.json")
 
         login_stub.assert_called_once()
         display_csv_as_table_stub.assert_not_called()
         display_filtered_table_stub.assert_called_once()
-        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100 })
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100 }, "users.json")
 
     @pytest.mark.parametrize("user_inputs", [("Apple", "N", "all", "Y")])
     def test_with_stubs3(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub, user_inputs):
         with patch('builtins.input', side_effect=user_inputs):
-            searchAndBuyProduct()
+            searchAndBuyProduct("users.json")
 
         login_stub.assert_called_once()
         display_csv_as_table_stub.assert_called_once()
         display_filtered_table_stub.assert_called_once()
-        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100})
+        checkoutAndPayment_stub.assert_called_once_with({"username": "Ramanathan", "wallet": 100}, "users.json")
 
     def test_with_stubs4(self, login_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub):
         i = [0]
@@ -634,7 +634,7 @@ class TestSuiteSearchAndBuyProduct:
 
         with patch('builtins.input', side_effect=input_side_effect):
             with pytest.raises(SystemExit):
-                searchAndBuyProduct()
+                searchAndBuyProduct("users.json")
 
         login_stub.assert_called_once()
         display_csv_as_table_stub.assert_called_once()
@@ -644,7 +644,7 @@ class TestSuiteSearchAndBuyProduct:
     def test_with_stubs5(self, login_fail_stub, checkoutAndPayment_stub, display_csv_as_table_stub, display_filtered_table_stub, user_inputs):
         with patch('builtins.input', side_effect=user_inputs):
             with pytest.raises(Exception, match="Login failed"):
-                searchAndBuyProduct()
+                searchAndBuyProduct("users.json")
 
         assert login_fail_stub.call_count >= 2
         display_csv_as_table_stub.assert_not_called()

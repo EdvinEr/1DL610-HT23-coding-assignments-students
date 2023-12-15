@@ -27,12 +27,12 @@ def display_filtered_table(csv_filename, search):
                 print(row)
 
 #Search for a product and buy it
-def searchAndBuyProduct():
+def searchAndBuyProduct(file_name):
     login_info = None
     marker = True
     #Login as a user
     while marker:
-        login_info = login('users_new.json')
+        login_info = login(file_name)
         if login_info is not None:
             marker = False
             break
@@ -46,4 +46,4 @@ def searchAndBuyProduct():
         check = input("Ready to shop? (Y/N)")
         if check.lower() == "y":
             break
-    checkoutAndPayment(login_info)
+    checkoutAndPayment(login_info, file_name)
