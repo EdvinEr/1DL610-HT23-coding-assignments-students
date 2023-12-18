@@ -2,4 +2,4 @@ from login import login
 from products import *
 
 #Run program
-searchAndBuyProduct()
+searchAndBuyProduct("users_new.json")

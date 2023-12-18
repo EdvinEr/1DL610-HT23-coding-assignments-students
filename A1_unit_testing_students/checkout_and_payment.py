@@ -66,10 +66,10 @@ def get_payment_method():
         else:
             print("Invalid payment method. Please enter 'wallet' or 'card'.")
 
-def choose_card(user, file_name):
+def choose_card(user):
     username = user.name
 
-    with open(file_name, 'r') as json_file:
+    with open('users_new.json', 'r') as json_file:
         users_data = json.load(json_file)
 
     user_index = next((index for index, u in enumerate(users_data) if u["username"] == username), None)
@@ -112,7 +112,7 @@ def checkout(user, cart):
         user.wallet -= total_price
 
     elif payment_method == 'card':
-        card_choice = choose_card(user, "users_new.json")
+        card_choice = choose_card(user)
 
         print(f"Payment successful using card {card_choice + 1}")
 
@@ -144,7 +144,7 @@ def check_cart(user, cart):
         return False
 
 # Main function for the shopping and checkout process
-def checkoutAndPayment(login_info):
+def checkoutAndPayment(login_info, file_name):
     # Create/retrieve a user using login information
     user = User(login_info["username"], login_info["wallet"])
     # Display available products
@@ -166,13 +166,13 @@ def checkoutAndPayment(login_info):
             ask_logout = logout(cart)
             if ask_logout is True:
 
-                with open('users_new.json', "r") as file:
+                with open(file_name, "r") as file:
                     data = json.load(file)
                     for entry in data:
                         if entry["username"] == user.name:
                             entry['wallet'] = user.wallet
 
-                with open('users_new.json', 'w') as file:
+                with open(file_name, 'w') as file:
                     json.dump(data, file)
 
                 print("You have been logged out")
