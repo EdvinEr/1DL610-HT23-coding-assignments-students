@@ -43,6 +43,7 @@ def login():
 
                     print("Successfully registered")
                     continue_registration = False
+                    return {"username": new_entry["username"], "wallet": new_entry["wallet"]}
                 else:
                     print("Password must have at least 1 capital letter, 1 special symbol and be 8 characters long.")
 

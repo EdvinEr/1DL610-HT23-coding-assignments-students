@@ -59,6 +59,8 @@ cart = ShoppingCart()
 
 # Function to complete the checkout process
 def checkout(user, cart):
+    products = load_products_from_csv("products.csv")
+
     if not cart.items:
         print("\nYour basket is empty. Please add items before checking out.")
         return
@@ -99,6 +101,9 @@ def check_cart(user, cart):
 
 # Main function for the shopping and checkout process
 def checkoutAndPayment(login_info):
+    products = load_products_from_csv("products.csv")
+    cart = ShoppingCart()
+
     # Create/retrieve a user using login information
     user = User(login_info["username"], login_info["wallet"])
     # Display available products

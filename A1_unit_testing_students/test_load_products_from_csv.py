@@ -5,7 +5,7 @@ import shutil
 from checkout_and_payment import load_products_from_csv
 import pytest
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def copy_csv_file():
     shutil.copy('products.csv', 'copy_products.csv')
     products = load_products_from_csv('copy_products.csv')
@@ -14,7 +14,7 @@ def copy_csv_file():
     os.remove('copy_products.csv')
     print("----------teardown----------")
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def empty_csv_file():
     empty_products = 'empty_products.csv'
 
@@ -28,7 +28,7 @@ def empty_csv_file():
     os.remove(empty_products)
     print("----------teardown----------")
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def modify_csv_file():
     shutil.copy('products.csv', 'modify_products.csv')
     yield 'modify_products.csv'
