@@ -3,19 +3,6 @@ from unittest.mock import patch, MagicMock, mock_open
 from products import searchAndBuyProduct
 import json
 
-'''
-@pytest.fixture
-def login_stub(mocker):
-    return mocker.patch('products.login', return_value={"username": "Ramanathan", "wallet": 100 })
-
-@pytest.fixture
-def login_fail_stub(mocker):
-    return mocker.patch('products.login', return_value=None, side_effect=[None, None, Exception("Login failed")])
-
-@pytest.fixture
-def login_fail_then_succeed_stub(mocker):
-    return mocker.patch('products.login', side_effect=[None, {"username": "Ramanathan", "wallet": 100}])
-'''
 
 @pytest.fixture
 def json_dump_mock(monkeypatch):
